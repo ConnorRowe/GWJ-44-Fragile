@@ -12,6 +12,7 @@ namespace Fragile.Parts
         public static RootPart RootPart = new RootPart();
         public static MainPart Body = new MainPart(20, "Body", GD.Load<Texture>("res://textures/body.png"), Vector2.Zero);
         public static MainPart EngineLarge = new MainPart(15, "Large Engine", GD.Load<Texture>("res://textures/engine.png"), new Vector2(-32, -32), new Construction.Point[2] { LEFT, UP });
+        public static WheelPart Wheel = new WheelPart(30, "Standard Wheel", GD.Load<Texture>("res://textures/wheel.png"), GD.Load<Texture>("res://textures/axle.png"), GD.Load<Texture>("res://textures/wheelonly.png"));
     }
 
     public abstract class Part : Godot.Object
@@ -50,6 +51,18 @@ namespace Fragile.Parts
         public MainPart(int strength, string partName, Texture texture, Vector2 texOffset, Construction.Point[] extraParts) : this(strength, partName, texture, texOffset)
         {
             ExtraParts = extraParts;
+        }
+    }
+
+    public sealed class WheelPart : MainPart
+    {
+        public Texture AxleTex { get; }
+        public Texture WheelTex { get; }
+
+        public WheelPart(int strength, string partName, Texture partTexture, Texture axleTexture, Texture wheelTexture) : base(strength, partName, partTexture, Vector2.Zero, new Construction.Point[] { new Construction.Point(0, 1) })
+        {
+            AxleTex = axleTexture;
+            WheelTex = wheelTexture;
         }
     }
 }

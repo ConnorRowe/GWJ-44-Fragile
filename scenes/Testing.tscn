@@ -1,0 +1,91 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://scenes/Testing.cs" type="Script" id=1]
+[ext_resource path="res://textures/axle.png" type="Texture" id=2]
+[ext_resource path="res://textures/wheelonly.png" type="Texture" id=3]
+
+[sub_resource type="RectangleShape2D" id=1]
+extents = Vector2( 264.5, 14 )
+
+[sub_resource type="PhysicsMaterial" id=4]
+bounce = 0.15
+
+[sub_resource type="CircleShape2D" id=3]
+radius = 16.0
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 58, 33 )
+
+[node name="Testing" type="Node2D"]
+script = ExtResource( 1 )
+
+[node name="Floor" type="StaticBody2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor"]
+position = Vector2( 240, 274 )
+shape = SubResource( 1 )
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Floor"]
+position = Vector2( -1, 25 )
+rotation = -1.57079
+shape = SubResource( 1 )
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="Floor"]
+position = Vector2( 485, 25 )
+rotation = -1.57079
+shape = SubResource( 1 )
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Floor"]
+position = Vector2( -51, 0 )
+polygon = PoolVector2Array( 204, 264, 298, 198, 375, 265 )
+
+[node name="Wheel" type="RigidBody2D" parent="."]
+position = Vector2( 106, 208 )
+mass = 3.04
+physics_material_override = SubResource( 4 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Wheel"]
+shape = SubResource( 3 )
+
+[node name="Sprite" type="Sprite" parent="Wheel"]
+texture = ExtResource( 3 )
+offset = Vector2( 0, -16 )
+
+[node name="Wheel2" type="RigidBody2D" parent="."]
+position = Vector2( 170, 208 )
+mass = 3.04
+physics_material_override = SubResource( 4 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Wheel2"]
+shape = SubResource( 3 )
+
+[node name="Sprite" type="Sprite" parent="Wheel2"]
+texture = ExtResource( 3 )
+offset = Vector2( 0, -16 )
+
+[node name="vehicle" type="RigidBody2D" parent="."]
+position = Vector2( 142, 148 )
+mass = 2.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="vehicle"]
+shape = SubResource( 2 )
+
+[node name="Sprite" type="Sprite" parent="vehicle"]
+position = Vector2( -36, 43 )
+texture = ExtResource( 2 )
+
+[node name="Sprite2" type="Sprite" parent="vehicle"]
+position = Vector2( 28, 43 )
+texture = ExtResource( 2 )
+
+[node name="PinJoint2D" type="PinJoint2D" parent="."]
+position = Vector2( 106, 208 )
+node_a = NodePath("../Wheel")
+node_b = NodePath("../vehicle")
+softness = 3.96
+
+[node name="PinJoint2D2" type="PinJoint2D" parent="."]
+position = Vector2( 170, 208 )
+node_a = NodePath("../Wheel2")
+node_b = NodePath("../vehicle")
+softness = 3.96

@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://scenes/Construction.cs" type="Script" id=1]
+
+[sub_resource type="RectangleShape2D" id=1]
+extents = Vector2( 256, 11 )
 
 [node name="Construction" type="Node2D"]
 script = ExtResource( 1 )
@@ -12,3 +15,40 @@ position = Vector2( 102, 6 )
 margin_left = 403.0
 margin_right = 443.0
 margin_bottom = 14.0
+
+[node name="ColorRect" type="ColorRect" parent="."]
+margin_left = -10.0
+margin_top = 260.0
+margin_right = 491.0
+margin_bottom = 282.0
+color = Color( 0.105882, 0.121569, 0.129412, 1 )
+
+[node name="ColorRect2" type="ColorRect" parent="."]
+margin_left = -11.0
+margin_top = -242.0
+margin_right = 11.0
+margin_bottom = 271.0
+color = Color( 0.105882, 0.121569, 0.129412, 1 )
+
+[node name="ColorRect3" type="ColorRect" parent="."]
+margin_left = 471.0
+margin_top = -242.0
+margin_right = 493.0
+margin_bottom = 271.0
+color = Color( 0.105882, 0.121569, 0.129412, 1 )
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2( 246, 271 )
+shape = SubResource( 1 )
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2( 0, 15 )
+rotation = 1.57079
+shape = SubResource( 1 )
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2( 482, 15 )
+rotation = 1.57079
+shape = SubResource( 1 )

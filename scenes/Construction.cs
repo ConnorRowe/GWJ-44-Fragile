@@ -23,6 +23,7 @@ namespace Fragile
             }
 
             public static Point operator +(Point a, Point b) => new Point(a.x + b.x, a.y + b.y);
+            public static Point operator -(Point a, Point b) => new Point(a.x - b.x, a.y - b.y);
             public static bool operator ==(Point a, Point b) => a.x == b.x && a.y == b.y;
             public static bool operator !=(Point a, Point b) => a.x != b.x || a.y != b.y;
 
@@ -58,7 +59,7 @@ namespace Fragile
         private const int GRID_WIDTH = 12;
         private static Texture rootTex = GD.Load<Texture>("res://textures/root.png");
 
-        private Part[,] partsGrid = new Part[GRID_WIDTH, GRID_HEIGHT];
+        private static Part[,] partsGrid = new Part[GRID_WIDTH, GRID_HEIGHT];
 
         private Node2D grid;
         private Label debug;
@@ -107,12 +108,26 @@ namespace Fragile
 
             if (evt is InputEventKey ek && ek.Pressed)
             {
-                if (ek.Scancode == (int)KeyList.Key1)
-                    mousePart = Parts.Parts.Body;
-                else if (ek.Scancode == (int)KeyList.Key2)
-                    mousePart = Parts.Parts.EngineLarge;
-                else if (ek.Scancode == (int)KeyList.Space)
-                    RemoveDisconnectedParts();
+                switch (ek.Scancode)
+                {
+                    case (int)KeyList.Key1:
+                        mousePart = Parts.Parts.Body;
+                        break;
+                    case (int)KeyList.Key2:
+                        mousePart = Parts.Parts.EngineLarge;
+                        break;
+                    case (int)KeyList.Key3:
+                        mousePart = Parts.Parts.Wheel;
+                        break;
+                    case (int)KeyList.Space:
+                        RemoveDisconnectedParts();
+                        break;
+                    case (int)KeyList.Enter:
+                        RemoveDisconnectedParts();
+                        var vehicle = ConstructVehicle();
+                        vehicle.SetPositionWithWheels(new Vector2(480 / 2, 0));
+                        break;
+                }
             }
         }
 
@@ -220,7 +235,14 @@ namespace Fragile
             {
                 return;
             }
-            if (partsGrid[point.x, point.y] is ExtraPart extraPart)
+
+            Part part = partsGrid[point.x, point.y];
+
+            if (part is RootPart)
+            {
+                return;
+            }
+            else if (part is ExtraPart extraPart)
             {
                 RemovePart(extraPart.OwnerPart);
             }
@@ -240,7 +262,7 @@ namespace Fragile
                 Update();
 
                 //TODO: check if connected to main vehicle part
-				RemoveDisconnectedParts();
+                RemoveDisconnectedParts();
             }
         }
 
@@ -316,6 +338,59 @@ namespace Fragile
 
             // Out of bounds
             return false;
+        }
+
+        private Vehicle ConstructVehicle()
+        {
+            Vehicle vehicle = new Vehicle();
+
+            AddChild(vehicle);
+            vehicle.Owner = this;
+
+            for (int y = 0; y < GRID_HEIGHT; y++)
+            {
+                for (int x = 0; x < GRID_WIDTH; x++)
+                {
+                    Part p = partsGrid[x, y];
+
+                    if (p != null)
+                    {
+                        Point pos = new Point(x, y) - rootPartPos;
+
+                        if (p is RootPart)
+                        {
+                            vehicle.AddSprite(rootTex, pos);
+                        }
+                        else if (p is WheelPart wheelPart)
+                        {
+                            vehicle.AddWheel(pos, wheelPart);
+                        }
+                        else if (p is MainPart mainPart)
+                        {
+                            vehicle.AddSprite(mainPart.Texture, pos, mainPart.TexOffset);
+                        }
+
+                        if (!(p is ExtraPart extraPart && partsGrid[extraPart.OwnerPart.x, extraPart.OwnerPart.y] is WheelPart))
+                            vehicle.AddSquareCollider(pos);
+                    }
+                }
+            }
+
+            return vehicle;
+        }
+
+        private void ClearGrid()
+        {
+            for (int y = 0; y < GRID_HEIGHT; y++)
+            {
+                for (int x = 0; x < GRID_WIDTH; x++)
+                {
+                    if (!(partsGrid[x, y] is RootPart))
+                        partsGrid[x, y] = null;
+                }
+            }
+
+            Update();
         }
     }
 }
