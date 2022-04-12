@@ -1,5 +1,6 @@
 using Godot;
 using Fragile.Parts;
+using System.Collections.Generic;
 
 namespace Fragile
 {
@@ -24,8 +25,11 @@ namespace Fragile
 
             public static Point operator +(Point a, Point b) => new Point(a.x + b.x, a.y + b.y);
             public static Point operator -(Point a, Point b) => new Point(a.x - b.x, a.y - b.y);
+            public static Point operator *(Point a, int b) => new Point(a.x * b, a.y * b);
             public static bool operator ==(Point a, Point b) => a.x == b.x && a.y == b.y;
             public static bool operator !=(Point a, Point b) => a.x != b.x || a.y != b.y;
+
+            public override string ToString() => $"({x}, {y})";
 
             public override bool Equals(object obj)
             {
@@ -48,12 +52,8 @@ namespace Fragile
                 }
             }
 
-            public override string ToString()
-            {
-                return $"({x}, {y})";
-            }
+            public Vector2 ToVector2() => new Vector2(x, y);
         }
-
 
         private const int GRID_HEIGHT = 8;
         private const int GRID_WIDTH = 12;
@@ -62,19 +62,20 @@ namespace Fragile
         private static Part[,] partsGrid = new Part[GRID_WIDTH, GRID_HEIGHT];
 
         private Node2D grid;
-        private Label debug;
+        public static Label Debug;
         private Point mouseGridPos = new Point(0, 0);
         private MainPart mousePart = Parts.Parts.EngineLarge;
-        private Point rootPartPos = new Point(6, 4);
+        public static Point RootPartPos { get; } = new Point(6, 4);
+        public static bool DrawGrid { get; set; } = true;
 
         public override void _Ready()
         {
             base._Ready();
 
             grid = GetNode<Node2D>("Grid");
-            debug = GetNode<Label>("debug");
+            Debug = GetNode<Label>("debug");
 
-            partsGrid[rootPartPos.x, rootPartPos.y] = Parts.Parts.RootPart;
+            partsGrid[RootPartPos.x, RootPartPos.y] = Parts.Parts.RootPart;
         }
 
         public override void _Process(float delta)
@@ -91,7 +92,7 @@ namespace Fragile
             if (evt is InputEventMouseMotion emm)
             {
                 mouseGridPos = new Point((emm.Position - grid.Position) / 32);
-                debug.Text = mouseGridPos.ToString();
+                // Debug.Text = mouseGridPos.ToString();
                 Update();
             }
             else if (evt is InputEventMouseButton emb && emb.Pressed)
@@ -119,6 +120,9 @@ namespace Fragile
                     case (int)KeyList.Key3:
                         mousePart = Parts.Parts.Wheel;
                         break;
+                    case (int)KeyList.Key4:
+                        mousePart = Parts.Parts.EngineSmall;
+                        break;
                     case (int)KeyList.Space:
                         RemoveDisconnectedParts();
                         break;
@@ -126,6 +130,7 @@ namespace Fragile
                         RemoveDisconnectedParts();
                         var vehicle = ConstructVehicle();
                         vehicle.SetPositionWithWheels(new Vector2(480 / 2, 0));
+                        DrawGrid = !DrawGrid;
                         break;
                 }
             }
@@ -133,6 +138,9 @@ namespace Fragile
 
         public override void _Draw()
         {
+            if (!DrawGrid)
+                return;
+
             for (int x = 0; x < GRID_WIDTH; x++)
             {
                 DrawLine(grid.Position + new Vector2(x * 32, 0), grid.Position + new Vector2(x * 32, GRID_HEIGHT * 32), Colors.DarkRed, 2);
@@ -268,10 +276,18 @@ namespace Fragile
 
         private void RemoveDisconnectedParts()
         {
-            System.Collections.Generic.HashSet<Point> connectedParts = new System.Collections.Generic.HashSet<Point>();
-            System.Collections.Generic.List<Point> workingParts = new System.Collections.Generic.List<Point>();
-            workingParts.Add(rootPartPos);
-            connectedParts.Add(rootPartPos);
+            foreach (Point p in GetDisconnectedParts())
+            {
+                RemovePart(p);
+            }
+        }
+
+        public static List<Point> GetDisconnectedParts()
+        {
+            List<Point> connectedParts = new List<Point>();
+            List<Point> workingParts = new List<Point>();
+            workingParts.Add(RootPartPos);
+            connectedParts.Add(RootPartPos);
             Point[] directions = new Point[4] { new Point(0, -1), new Point(1, 0), new Point(0, 1), new Point(-1, 0) };
 
             while (workingParts.Count > 0)
@@ -295,6 +311,8 @@ namespace Fragile
                 workingParts.RemoveAt(0);
             }
 
+            List<Point> disconnectedParts = new List<Point>();
+
             for (int y = 0; y < GRID_HEIGHT; y++)
             {
                 for (int x = 0; x < GRID_WIDTH; x++)
@@ -305,13 +323,13 @@ namespace Fragile
                     {
                         if (!connectedParts.Contains(p))
                         {
-                            RemovePart(p);
+                            disconnectedParts.Add(p);
                         }
                     }
                 }
             }
 
-            Update();
+            return disconnectedParts;
         }
 
         private static bool IsPointInGrid(Point point)
@@ -324,12 +342,12 @@ namespace Fragile
             return x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT;
         }
 
-        private bool IsGridPointEmpty(Point point)
+        private static bool IsGridPointEmpty(Point point)
         {
             return IsGridPointEmpty(point.x, point.y);
         }
 
-        private bool IsGridPointEmpty(int x, int y)
+        private static bool IsGridPointEmpty(int x, int y)
         {
             if (IsPointInGrid(x, y))
             {
@@ -355,7 +373,7 @@ namespace Fragile
 
                     if (p != null)
                     {
-                        Point pos = new Point(x, y) - rootPartPos;
+                        Point pos = new Point(x, y) - RootPartPos;
 
                         if (p is RootPart)
                         {
@@ -368,6 +386,12 @@ namespace Fragile
                         else if (p is MainPart mainPart)
                         {
                             vehicle.AddSprite(mainPart.Texture, pos, mainPart.TexOffset);
+                        }
+
+                        if (p is EnginePart enginePart)
+                        {
+                            vehicle.AddEngineStats(enginePart);
+                            vehicle.AddEngineSmoke(pos, enginePart.SmokeOffset);
                         }
 
                         if (!(p is ExtraPart extraPart && partsGrid[extraPart.OwnerPart.x, extraPart.OwnerPart.y] is WheelPart))
@@ -391,6 +415,20 @@ namespace Fragile
             }
 
             Update();
+        }
+
+        public static Part GetGridPart(Point point)
+        {
+            if (IsPointInGrid(point))
+                return partsGrid[point.x, point.y];
+            else
+                return null;
+        }
+
+        public static void SetGridPart(Point point, Part value)
+        {
+            if (IsPointInGrid(point))
+                partsGrid[point.x, point.y] = value;
         }
     }
 }
