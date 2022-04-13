@@ -9,8 +9,9 @@ namespace Fragile
     {
         private static RectangleShape2D cellShape = new RectangleShape2D() { Extents = new Vector2(16, 16) };
         private static CircleShape2D wheelShape = new CircleShape2D() { Radius = 16f };
-        private static PhysicsMaterial wheelPhysMat = new PhysicsMaterial() { Bounce = .2f };
+        private static PhysicsMaterial wheelPhysMat = new PhysicsMaterial() { Bounce = .2f, Rough = true, Friction = 1f };
         private static PackedScene engineSmokeScene = GD.Load<PackedScene>("res://scenes/EngineSmoke.tscn");
+        private static PackedScene nutsNBoltsScene = GD.Load<PackedScene>("res://scenes/NutsNBolts.tscn");
 
         public List<RigidBody2D> Wheels = new List<RigidBody2D>();
         public List<PinJoint2D> PinJoints = new List<PinJoint2D>();
@@ -19,6 +20,8 @@ namespace Fragile
         private float maxSpeed = 25;
         private float accelerationScale = 0f;
         private float maxSpeedScale = 0f;
+
+        private float forceNeededToBreak = 16f;
 
         private Dictionary<CollisionShape2D, Point> colliderPoints = new Dictionary<CollisionShape2D, Point>();
         private Dictionary<Point, CollisionShape2D> pointColliders = new Dictionary<Point, CollisionShape2D>();
@@ -31,6 +34,8 @@ namespace Fragile
         private uint lastColliderHitIndex = 0;
         private bool showSmoke = false;
 
+        private float maxVelLenDel = 0;
+
         public override void _Ready()
         {
             base._Ready();
@@ -39,6 +44,18 @@ namespace Fragile
             ContactsReported = 1;
 
             Connect("body_shape_entered", this, nameof(BodyShapeEntered));
+
+            Camera2D camera2D = new Camera2D()
+            {
+                SmoothingEnabled = true,
+                Current = true,
+                LimitLeft = 0,
+                LimitBottom = 270,
+                Position = new Vector2(0, 32),
+                ProcessMode = Camera2D.Camera2DProcessMode.Physics
+            };
+
+            AddChild(camera2D);
         }
 
         public override void _Input(InputEvent evt)
@@ -108,13 +125,15 @@ namespace Fragile
             }
 
             // Hit detection ~ basically figures out how abruptly the velocity changes
-            velocityLenDelta = (lastFrameVelocity - (LinearVelocity * delta)).LengthSquared();
-            lastFrameVelocity = LinearVelocity * delta;
+            Vector2 d = LinearVelocity * delta * Mass;
+            velocityLenDelta = (lastFrameVelocity - d).LengthSquared();
+            lastFrameVelocity = d;
 
-            Construction.Debug.Text = $"{velocityLenDelta}";
+            if (velocityLenDelta > maxVelLenDel)
+                maxVelLenDel = velocityLenDelta;
 
             // Velocity changed sharply - probably hit something
-            if (velocityLenDelta > 6f)
+            if (velocityLenDelta > forceNeededToBreak)
             {
                 var hitShape = ShapeOwnerGetOwner(ShapeFindOwner((int)lastColliderHitIndex));
 
@@ -194,7 +213,6 @@ namespace Fragile
             {
                 Texture = wheelPart.WheelTex,
                 Offset = new Vector2(0, -16),
-                ZIndex = -1
             };
 
             wheel.AddChild(wheelSprite);
@@ -237,6 +255,8 @@ namespace Fragile
             Point partPoint = colliderPoints[partCollider];
             Part part = Construction.GetGridPart(partPoint + Construction.RootPartPos);
 
+            NewNutsNBolts(partCollider.GlobalPosition);
+
             if (part is MainPart mainPart)
             {
                 Sprite sprite = pointSprites[partPoint];
@@ -252,6 +272,8 @@ namespace Fragile
                         Position = sprite.GlobalPosition,
                         Rotation = Rotation
                     };
+
+                    Weight -= mainPart.Mass;
 
                     RemoveChild(sprite);
                     RemoveChild(partCollider);
@@ -364,6 +386,19 @@ namespace Fragile
             }
 
             showSmoke = emit;
+        }
+
+        private async void NewNutsNBolts(Vector2 position)
+        {
+            var p = nutsNBoltsScene.Instance<Particles2D>();
+            p.Emitting = true;
+            GetParent().AddChild(p);
+            p.Position = position;
+
+            var timer = GetTree().CreateTimer(p.Lifetime);
+            await ToSignal(timer, "timeout");
+
+            p.QueueFree();
         }
     }
 }

@@ -58,31 +58,56 @@ namespace Fragile
         private const int GRID_HEIGHT = 8;
         private const int GRID_WIDTH = 12;
         private static Texture rootTex = GD.Load<Texture>("res://textures/root.png");
+        private static Texture gridCursorGreenTex = GD.Load<Texture>("res://textures/grid_cursor_green.png");
+        private static Texture gridCursorRedTex = GD.Load<Texture>("res://textures/grid_cursor_red.png");
 
         private static Part[,] partsGrid = new Part[GRID_WIDTH, GRID_HEIGHT];
-
-        private Node2D grid;
-        public static Label Debug;
-        private Point mouseGridPos = new Point(0, 0);
-        private MainPart mousePart = Parts.Parts.EngineLarge;
         public static Point RootPartPos { get; } = new Point(6, 4);
         public static bool DrawGrid { get; set; } = true;
+        public static Label Debug;
+
+        private Node2D grid;
+        private Point cursorGridPos = new Point(0, 0);
+        private MainPart cursorPart = Parts.Parts.Body;
+        private Sprite gridCursor;
+        private Sprite[] extraGridCursors;
+        private Tween tween;
+        private Label selectedPartLabel;
+        private Vehicle vehicle;
+
+        private Dictionary<MainPart, int> inventory = new Dictionary<MainPart, int>() { { Parts.Parts.Body, 99 }, { Parts.Parts.Wheel, 99 }, { Parts.Parts.EngineSmall, 99 }, { Parts.Parts.EngineLarge, 99 } };
+        private Dictionary<MainPart, PartButton> partButtons = new Dictionary<MainPart, PartButton>();
 
         public override void _Ready()
         {
             base._Ready();
 
             grid = GetNode<Node2D>("Grid");
+            gridCursor = GetNode<Sprite>("Grid/GridCursor");
+            tween = GetNode<Tween>("Tween");
+            extraGridCursors = new Sprite[3] { gridCursor.GetChild<Sprite>(0), gridCursor.GetChild<Sprite>(1), gridCursor.GetChild<Sprite>(2) };
+            selectedPartLabel = GetNode<Label>("SelectedPartLabel");
+
             Debug = GetNode<Label>("debug");
 
+            // Place root part
             partsGrid[RootPartPos.x, RootPartPos.y] = Parts.Parts.RootPart;
-        }
-
-        public override void _Process(float delta)
-        {
-            base._Process(delta);
-
             Update();
+
+            partButtons.Add(Parts.Parts.Body, GetNode<PartButton>("BodyButton"));
+            partButtons.Add(Parts.Parts.Wheel, GetNode<PartButton>("Wheel"));
+            partButtons.Add(Parts.Parts.EngineSmall, GetNode<PartButton>("SmallEngine"));
+            partButtons.Add(Parts.Parts.EngineLarge, GetNode<PartButton>("LargeEngine"));
+
+            partButtons[Parts.Parts.Body].SetPart(Parts.Parts.Body);
+            partButtons[Parts.Parts.Wheel].SetPart(Parts.Parts.Wheel);
+            partButtons[Parts.Parts.EngineSmall].SetPart(Parts.Parts.EngineSmall);
+            partButtons[Parts.Parts.EngineLarge].SetPart(Parts.Parts.EngineLarge);
+
+            foreach (var part in partButtons.Keys)
+            {
+                partButtons[part].Connect("pressed", this, nameof(PartButtonPressed), new Godot.Collections.Array() { part });
+            }
         }
 
         public override void _Input(InputEvent evt)
@@ -91,19 +116,22 @@ namespace Fragile
 
             if (evt is InputEventMouseMotion emm)
             {
-                mouseGridPos = new Point((emm.Position - grid.Position) / 32);
+                var mousePos = (emm.Position - grid.Position);
+                if (mousePos.x < 0)
+                    mousePos.x -= 64f;
+                UpdateGridCursor(new Point(mousePos / 32), false);
                 // Debug.Text = mouseGridPos.ToString();
-                Update();
             }
             else if (evt is InputEventMouseButton emb && emb.Pressed)
             {
                 if (emb.ButtonIndex == (int)ButtonList.Left)
                 {
-                    TryPlacePart(mouseGridPos, mousePart);
+                    if (gridCursor.Visible)
+                        TryPlacePart(cursorGridPos, cursorPart);
                 }
                 else if (emb.ButtonIndex == (int)ButtonList.Right)
                 {
-                    RemovePart(mouseGridPos);
+                    RemovePart(cursorGridPos);
                 }
             }
 
@@ -111,26 +139,10 @@ namespace Fragile
             {
                 switch (ek.Scancode)
                 {
-                    case (int)KeyList.Key1:
-                        mousePart = Parts.Parts.Body;
-                        break;
-                    case (int)KeyList.Key2:
-                        mousePart = Parts.Parts.EngineLarge;
-                        break;
-                    case (int)KeyList.Key3:
-                        mousePart = Parts.Parts.Wheel;
-                        break;
-                    case (int)KeyList.Key4:
-                        mousePart = Parts.Parts.EngineSmall;
-                        break;
-                    case (int)KeyList.Space:
-                        RemoveDisconnectedParts();
-                        break;
                     case (int)KeyList.Enter:
-                        RemoveDisconnectedParts();
-                        var vehicle = ConstructVehicle();
-                        vehicle.SetPositionWithWheels(new Vector2(480 / 2, 0));
-                        DrawGrid = !DrawGrid;
+                        // Construct vehicle and go to DriveWorld
+                        SwitchToDriveWorld();
+
                         break;
                 }
             }
@@ -141,20 +153,12 @@ namespace Fragile
             if (!DrawGrid)
                 return;
 
-            for (int x = 0; x < GRID_WIDTH; x++)
-            {
-                DrawLine(grid.Position + new Vector2(x * 32, 0), grid.Position + new Vector2(x * 32, GRID_HEIGHT * 32), Colors.DarkRed, 2);
-            }
-
             for (int y = 0; y < GRID_HEIGHT; y++)
             {
-                DrawLine(grid.Position + new Vector2(0, y * 32), grid.Position + new Vector2(GRID_WIDTH * 32, y * 32), Colors.DarkCyan, 2);
-
                 for (int x = 0; x < GRID_WIDTH; x++)
                 {
                     if (!IsGridPointEmpty(x, y))
                     {
-                        // DrawRect(new Rect2(grid.Position + new Vector2(x * 32, y * 32), new Vector2(32, 32)), Colors.RoyalBlue);
                         if (partsGrid[x, y] is MainPart mainPart)
                         {
                             DrawTexture(mainPart.Texture, grid.Position + mainPart.TexOffset + new Vector2(x * 32, y * 32));
@@ -166,35 +170,9 @@ namespace Fragile
                     }
                 }
             }
-
-            int mouseX = (int)mouseGridPos.x;
-            int mouseY = (int)mouseGridPos.y;
-
-            if (mousePart != null && mouseX >= 0 && mouseX < GRID_WIDTH && mouseY >= 0 && mouseY < GRID_HEIGHT)
-            {
-                bool clear = true;
-
-                if (partsGrid[mouseX, mouseY] != null)
-                    clear = false;
-
-                foreach (var extraPos in mousePart.ExtraParts)
-                {
-                    if (!IsGridPointEmpty(mouseX + (int)extraPos.x, mouseY + (int)extraPos.y))
-                    {
-                        clear = false;
-                        break;
-                    }
-                }
-
-                DrawRect(new Rect2(grid.Position + new Vector2(mouseX * 32, mouseY * 32), new Vector2(32, 32)), clear ? Colors.Green : Colors.Red, false, 4);
-                foreach (var extraPos in mousePart.ExtraParts)
-                {
-                    DrawRect(new Rect2(grid.Position + new Vector2((mouseX + (int)extraPos.x) * 32, (mouseY + (int)extraPos.y) * 32), new Vector2(32, 32)), clear ? Colors.Green : Colors.Red, false, 4);
-                }
-            }
         }
 
-        private bool TryPlacePart(Point point, Part part)
+        private bool TryPlacePart(Point point, MainPart part)
         {
             if (!IsGridPointEmpty(point))
             {
@@ -202,6 +180,12 @@ namespace Fragile
             }
             else
             {
+                if (inventory[part] <= 0)
+                    return false;
+
+                inventory[part]--;
+                partButtons[part].SetCount(inventory[part]);
+
                 partsGrid[point.x, point.y] = part;
 
                 if (part is MainPart mainPart)
@@ -358,12 +342,12 @@ namespace Fragile
             return false;
         }
 
-        private Vehicle ConstructVehicle()
+        private Vehicle ConstructVehicle(Node parent)
         {
             Vehicle vehicle = new Vehicle();
 
-            AddChild(vehicle);
-            vehicle.Owner = this;
+            parent.AddChild(vehicle);
+            vehicle.ZIndex = 1;
 
             for (int y = 0; y < GRID_HEIGHT; y++)
             {
@@ -374,6 +358,9 @@ namespace Fragile
                     if (p != null)
                     {
                         Point pos = new Point(x, y) - RootPartPos;
+
+                        if (p is MainPart m)
+                            vehicle.Weight += m.Mass;
 
                         if (p is RootPart)
                         {
@@ -429,6 +416,98 @@ namespace Fragile
         {
             if (IsPointInGrid(point))
                 partsGrid[point.x, point.y] = value;
+        }
+
+        private void UpdateGridCursor(Point cursorPoint, bool forceFullUpdate)
+        {
+            if (IsPointInGrid(cursorPoint))
+            {
+                if (!gridCursor.Visible)
+                {
+                    // Show
+
+                    gridCursor.Visible = true;
+                }
+
+                if (cursorGridPos != cursorPoint || forceFullUpdate)
+                {
+                    cursorGridPos = cursorPoint;
+
+                    gridCursor.Position = (cursorGridPos * 32).ToVector2() + new Vector2(17, 17);
+
+                    tween.Stop(gridCursor);
+
+                    // tween.InterpolateProperty(gridCursor, "scale", Vector2.One, new Vector2(.8f, .8f), .4f, Tween.TransitionType.Bounce);
+                    tween.InterpolateProperty(gridCursor, "scale", new Vector2(.8f, .8f), Vector2.One, .4f, Tween.TransitionType.Elastic, Tween.EaseType.Out);
+                    tween.Start();
+
+                    // Extra parts
+                    bool clear = true;
+
+                    clear = IsGridPointEmpty(cursorGridPos);
+
+                    if (clear)
+                    {
+                        foreach (var extraPos in cursorPart.ExtraParts)
+                        {
+                            if (!IsGridPointEmpty(cursorGridPos + extraPos))
+                            {
+                                clear = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    gridCursor.Texture = clear ? gridCursorGreenTex : gridCursorRedTex;
+
+                    for (int i = 0; i < extraGridCursors.Length; i++)
+                    {
+                        if (i < cursorPart.ExtraParts.Length)
+                        {
+                            extraGridCursors[i].Position = (cursorPart.ExtraParts[i] * 32).ToVector2();
+                            extraGridCursors[i].Texture = gridCursor.Texture;
+                            extraGridCursors[i].Visible = true;
+                        }
+                        else
+                        {
+                            extraGridCursors[i].Visible = false;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (gridCursor.Visible)
+                {
+                    // Hide
+                    gridCursor.Visible = false;
+                }
+            }
+        }
+
+        private void SetCursorPart(MainPart part)
+        {
+            cursorPart = part;
+            UpdateGridCursor(cursorGridPos, true);
+        }
+
+        private void PartButtonPressed(MainPart part)
+        {
+            SetCursorPart(part);
+            selectedPartLabel.Text = $"Selected part:\n{part.PartName}";
+        }
+
+        private void SwitchToDriveWorld()
+        {
+            DriveWorld driveWorld = GD.Load<PackedScene>("res://scenes/DriveWorld.tscn").Instance<DriveWorld>();
+
+            RemoveDisconnectedParts();
+            vehicle = ConstructVehicle(driveWorld);
+            vehicle.SetPositionWithWheels(new Vector2(254, 103));
+            driveWorld.SetVehicle(vehicle);
+
+            GetTree().Root.AddChild(driveWorld);
+            QueueFree();
         }
     }
 }

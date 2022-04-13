@@ -11,10 +11,10 @@ namespace Fragile.Parts
         private static readonly Point LEFT = new Point(-1, 0);
 
         public static RootPart RootPart = new RootPart();
-        public static MainPart Body = new MainPart(20, "Body", GD.Load<Texture>("res://textures/body.png"), Vector2.Zero);
+        public static MainPart Body = new MainPart(3, "Body", GD.Load<Texture>("res://textures/body.png"), Vector2.Zero);
         public static EnginePart EngineSmall = new EnginePart
         (
-            15,
+            8,
             "Small Engine",
             GD.Load<Texture>("res://textures/engine_small.png"),
             Vector2.Zero,
@@ -24,7 +24,7 @@ namespace Fragile.Parts
         );
         public static EnginePart EngineLarge = new EnginePart
         (
-            15,
+            12,
             "Large Engine",
             GD.Load<Texture>("res://textures/engine_large.png"),
             new Vector2(-32, -32),
@@ -33,7 +33,7 @@ namespace Fragile.Parts
             new Vector2(-16, 8),
             new Point[2] { LEFT, UP }
         );
-        public static WheelPart Wheel = new WheelPart(30, "Standard Wheel", GD.Load<Texture>("res://textures/wheel.png"), GD.Load<Texture>("res://textures/axle.png"), GD.Load<Texture>("res://textures/wheelonly.png"));
+        public static WheelPart Wheel = new WheelPart(8, "Standard Wheel", GD.Load<Texture>("res://textures/wheel.png"), GD.Load<Texture>("res://textures/axle.png"), GD.Load<Texture>("res://textures/wheelonly.png"));
     }
 
     public abstract class Part : Godot.Object
@@ -56,20 +56,20 @@ namespace Fragile.Parts
 
     public class MainPart : Part
     {
-        public int Strength { get; }
+        public int Mass { get; }
         public Point[] ExtraParts { get; } = new Point[0];
         public Texture Texture { get; }
         public Vector2 TexOffset { get; }
 
         public MainPart() { }
-        public MainPart(int strength, string partName, Texture texture, Vector2 texOffset)
+        public MainPart(int mass, string partName, Texture texture, Vector2 texOffset)
         {
-            Strength = strength;
+            Mass = mass;
             PartName = partName;
             Texture = texture;
             TexOffset = texOffset;
         }
-        public MainPart(int strength, string partName, Texture texture, Vector2 texOffset, Point[] extraParts) : this(strength, partName, texture, texOffset)
+        public MainPart(int mass, string partName, Texture texture, Vector2 texOffset, Point[] extraParts) : this(mass, partName, texture, texOffset)
         {
             ExtraParts = extraParts;
         }
@@ -80,7 +80,7 @@ namespace Fragile.Parts
         public Texture AxleTex { get; }
         public Texture WheelTex { get; }
 
-        public WheelPart(int strength, string partName, Texture partTexture, Texture axleTexture, Texture wheelTexture) : base(strength, partName, partTexture, Vector2.Zero, new Point[] { new Point(0, 1) })
+        public WheelPart(int mass, string partName, Texture partTexture, Texture axleTexture, Texture wheelTexture) : base(mass, partName, partTexture, Vector2.Zero, new Point[] { new Point(0, 1) })
         {
             AxleTex = axleTexture;
             WheelTex = wheelTexture;
@@ -93,14 +93,14 @@ namespace Fragile.Parts
         public float Acceleration { get; }
         public Vector2 SmokeOffset { get; }
 
-        public EnginePart(int strength, string partName, Texture texture, Vector2 texOffset, float maxSpeed, float acceleration, Vector2 smokeOffset) : base(strength, partName, texture, texOffset)
+        public EnginePart(int mass, string partName, Texture texture, Vector2 texOffset, float maxSpeed, float acceleration, Vector2 smokeOffset) : base(mass, partName, texture, texOffset)
         {
             MaxSpeed = maxSpeed;
             Acceleration = acceleration;
             SmokeOffset = smokeOffset;
         }
 
-        public EnginePart(int strength, string partName, Texture texture, Vector2 texOffset, float maxSpeed, float acceleration, Vector2 smokeOffset, Point[] extraParts) : base(strength, partName, texture, texOffset, extraParts)
+        public EnginePart(int mass, string partName, Texture texture, Vector2 texOffset, float maxSpeed, float acceleration, Vector2 smokeOffset, Point[] extraParts) : base(mass, partName, texture, texOffset, extraParts)
         {
             MaxSpeed = maxSpeed;
             Acceleration = acceleration;
