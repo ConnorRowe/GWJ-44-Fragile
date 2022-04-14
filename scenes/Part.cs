@@ -33,7 +33,8 @@ namespace Fragile.Parts
             new Vector2(-16, 8),
             new Point[2] { LEFT, UP }
         );
-        public static WheelPart Wheel = new WheelPart(8, "Standard Wheel", GD.Load<Texture>("res://textures/wheel.png"), GD.Load<Texture>("res://textures/axle.png"), GD.Load<Texture>("res://textures/wheelonly.png"));
+        public static WheelPart WheelStandard = new WheelPart(8, "Standard Wheel", GD.Load<Texture>("res://textures/axle_standard.png"), GD.Load<Texture>("res://textures/wheel_standard.png"));
+        public static WheelPart WheelSpring = new WheelPart(8, "Spring Wheel", GD.Load<Texture>("res://textures/axle_spring.png"), GD.Load<Texture>("res://textures/wheel_spring.png"));
     }
 
     public abstract class Part : Godot.Object
@@ -77,12 +78,10 @@ namespace Fragile.Parts
 
     public sealed class WheelPart : MainPart
     {
-        public Texture AxleTex { get; }
         public Texture WheelTex { get; }
 
-        public WheelPart(int mass, string partName, Texture partTexture, Texture axleTexture, Texture wheelTexture) : base(mass, partName, partTexture, Vector2.Zero, new Point[] { new Point(0, 1) })
+        public WheelPart(int mass, string partName, Texture partTexture, Texture wheelTexture) : base(mass, partName, partTexture, Vector2.Zero, new Point[] { new Point(0, 1) })
         {
-            AxleTex = axleTexture;
             WheelTex = wheelTexture;
         }
     }

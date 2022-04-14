@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/wheelonly.png-637c5a770852dd13f7f6b3a930ae858c.stex"
+path="res://.import/self_destruct_hover.png-a05b72a650acecbf71555465d2b9f694.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://textures/wheelonly.png"
-dest_files=[ "res://.import/wheelonly.png-637c5a770852dd13f7f6b3a930ae858c.stex" ]
+source_file="res://textures/self_destruct_hover.png"
+dest_files=[ "res://.import/self_destruct_hover.png-a05b72a650acecbf71555465d2b9f694.stex" ]
 
 [params]
 

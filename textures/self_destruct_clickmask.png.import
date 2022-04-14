@@ -1,0 +1,15 @@
+[remap]
+
+importer="bitmap"
+type="BitMap"
+path="res://.import/self_destruct_clickmask.png-6df34a93873bd893aa52c36b0487134c.res"
+
+[deps]
+
+source_file="res://textures/self_destruct_clickmask.png"
+dest_files=[ "res://.import/self_destruct_clickmask.png-6df34a93873bd893aa52c36b0487134c.res" ]
+
+[params]
+
+create_from=0
+threshold=0.5

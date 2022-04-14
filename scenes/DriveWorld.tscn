@@ -1,8 +1,13 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=10 format=2]
 
+[ext_resource path="res://fonts/NormalOutlined.tres" type="DynamicFont" id=1]
 [ext_resource path="res://scenes/DriveWorld.cs" type="Script" id=2]
 [ext_resource path="res://textures/sky.png" type="Texture" id=3]
 [ext_resource path="res://textures/clouds.png" type="Texture" id=4]
+[ext_resource path="res://textures/self_destruct_normal.png" type="Texture" id=5]
+[ext_resource path="res://textures/self_destruct_pressed.png" type="Texture" id=6]
+[ext_resource path="res://textures/self_destruct_hover.png" type="Texture" id=7]
+[ext_resource path="res://textures/self_destruct_clickmask.png" type="BitMap" id=8]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 10, 713 )
@@ -49,3 +54,41 @@ centered = false
 [node name="CollisionShape2D" type="CollisionShape2D" parent="NoGoinBack"]
 position = Vector2( -10, 0 )
 shape = SubResource( 1 )
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="DistanceLabel" type="Label" parent="UI"]
+margin_left = 401.0
+margin_top = 8.0
+margin_right = 475.0
+margin_bottom = 21.0
+custom_colors/font_color = Color( 0.960784, 1, 0.909804, 1 )
+custom_colors/font_outline_modulate = Color( 0.0784314, 0.0941176, 0.180392, 1 )
+custom_fonts/font = ExtResource( 1 )
+text = "0m"
+align = 2
+
+[node name="fps" type="Label" parent="UI"]
+margin_left = 3.0
+margin_top = 259.0
+margin_right = 77.0
+margin_bottom = 272.0
+custom_colors/font_color = Color( 0.960784, 1, 0.909804, 1 )
+custom_colors/font_outline_modulate = Color( 0.0784314, 0.0941176, 0.180392, 1 )
+custom_fonts/font = ExtResource( 1 )
+text = "60"
+
+[node name="SelfDestruct" type="TextureButton" parent="UI"]
+margin_left = 414.0
+margin_top = 204.0
+margin_right = 478.0
+margin_bottom = 268.0
+focus_mode = 0
+shortcut_in_tooltip = false
+enabled_focus_mode = 0
+texture_normal = ExtResource( 5 )
+texture_pressed = ExtResource( 6 )
+texture_hover = ExtResource( 7 )
+texture_disabled = ExtResource( 5 )
+texture_focused = ExtResource( 5 )
+texture_click_mask = ExtResource( 8 )

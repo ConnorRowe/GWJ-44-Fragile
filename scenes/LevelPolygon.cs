@@ -5,7 +5,6 @@ namespace Fragile
     [Tool]
     public class LevelPolygon : Polygon2D
     {
-        private static PhysicsMaterial physicsMaterial = new PhysicsMaterial() { Friction = 1f, Rough = true };
         private Color outlineColour = Colors.White;
         private float thickness = 1f;
 
@@ -22,7 +21,7 @@ namespace Fragile
             {
                 StaticBody2D staticBody = new StaticBody2D()
                 {
-                    PhysicsMaterialOverride = physicsMaterial
+                    PhysicsMaterialOverride = GlobalNodes.RoughPhysMat
                 };
                 CollisionPolygon2D collisionPolygon = new CollisionPolygon2D()
                 {

@@ -20,6 +20,7 @@ OutlineColour = Color( 0.160784, 0.113725, 0.168627, 1 )
 Thickness = 2.5
 
 [node name="GridForScale" type="TextureRect" parent="."]
+visible = false
 modulate = Color( 1, 1, 1, 0.431373 )
 margin_left = 16.0
 margin_top = -25.0

@@ -5,6 +5,11 @@ namespace Fragile
     public class GlobalNodes : Node
     {
         public static RandomNumberGenerator RNG { get; } = new RandomNumberGenerator();
+        public static PhysicsMaterial RoughPhysMat { get; } = new PhysicsMaterial() { Friction = 1f, Rough = true };
+
+        public static GlobalNodes INSTANCE;
+
+        private static AudioStreamPlayer uiClickPlayer;
 
         static GlobalNodes()
         {
@@ -33,6 +38,21 @@ namespace Fragile
             } while (!file.Empty());
 
             objectArrayOut = objectList.ToArray();
+        }
+
+        public static void UIClick()
+        {
+            if (!uiClickPlayer.Playing)
+                uiClickPlayer.Play();
+        }
+
+        public override void _Ready()
+        {
+            base._Ready();
+
+            INSTANCE = this;
+
+            uiClickPlayer = GetNode<AudioStreamPlayer>("UIClickPlayer");
         }
     }
 }

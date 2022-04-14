@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=2]
+[gd_scene load_steps=18 format=2]
 
 [ext_resource path="res://scenes/Construction.cs" type="Script" id=1]
 [ext_resource path="res://textures/grid_cell.png" type="Texture" id=2]
@@ -28,11 +28,17 @@ scancode = 51
 [sub_resource type="ShortCut" id=7]
 shortcut = SubResource( 6 )
 
-[sub_resource type="InputEventKey" id=8]
+[sub_resource type="InputEventKey" id=10]
 scancode = 52
 
 [sub_resource type="ShortCut" id=9]
-shortcut = SubResource( 8 )
+shortcut = SubResource( 10 )
+
+[sub_resource type="InputEventKey" id=11]
+scancode = 53
+
+[sub_resource type="ShortCut" id=12]
+shortcut = SubResource( 11 )
 
 [node name="Construction" type="Node2D"]
 script = ExtResource( 1 )
@@ -108,6 +114,8 @@ texture = ExtResource( 3 )
 show_behind_parent = true
 texture = ExtResource( 3 )
 
+[node name="Warning" type="Sprite" parent="Grid/GridCursor"]
+
 [node name="debug" type="Label" parent="."]
 visible = false
 margin_left = 302.0
@@ -154,3 +162,10 @@ margin_top = 86.0
 margin_right = 90.0
 margin_bottom = 128.0
 shortcut = SubResource( 9 )
+
+[node name="WheelSpring" parent="." instance=ExtResource( 5 )]
+margin_left = 4.0
+margin_top = 132.0
+margin_right = 46.0
+margin_bottom = 174.0
+shortcut = SubResource( 12 )

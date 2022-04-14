@@ -60,6 +60,9 @@ namespace Fragile
         private static Texture rootTex = GD.Load<Texture>("res://textures/root.png");
         private static Texture gridCursorGreenTex = GD.Load<Texture>("res://textures/grid_cursor_green.png");
         private static Texture gridCursorRedTex = GD.Load<Texture>("res://textures/grid_cursor_red.png");
+        private static Texture blockedTex = GD.Load<Texture>("res://textures/blocked.png");
+        private static Texture disconnectedTex = GD.Load<Texture>("res://textures/disconnected.png");
+        public static Point[] FourDirs { get; } = new Point[4] { new Point(0, -1), new Point(1, 0), new Point(0, 1), new Point(-1, 0) };
 
         private static Part[,] partsGrid = new Part[GRID_WIDTH, GRID_HEIGHT];
         public static Point RootPartPos { get; } = new Point(6, 4);
@@ -71,11 +74,15 @@ namespace Fragile
         private MainPart cursorPart = Parts.Parts.Body;
         private Sprite gridCursor;
         private Sprite[] extraGridCursors;
+        private Sprite cursorWarning;
         private Tween tween;
         private Label selectedPartLabel;
         private Vehicle vehicle;
+        private bool cursorClear;
+        private bool cursorConnected;
 
-        private Dictionary<MainPart, int> inventory = new Dictionary<MainPart, int>() { { Parts.Parts.Body, 99 }, { Parts.Parts.Wheel, 99 }, { Parts.Parts.EngineSmall, 99 }, { Parts.Parts.EngineLarge, 99 } };
+
+        private Dictionary<MainPart, int> inventory = new Dictionary<MainPart, int>() { { Parts.Parts.Body, 99 }, { Parts.Parts.WheelStandard, 99 }, { Parts.Parts.EngineSmall, 99 }, { Parts.Parts.EngineLarge, 99 }, { Parts.Parts.WheelSpring, 99 } };
         private Dictionary<MainPart, PartButton> partButtons = new Dictionary<MainPart, PartButton>();
 
         public override void _Ready()
@@ -87,6 +94,7 @@ namespace Fragile
             tween = GetNode<Tween>("Tween");
             extraGridCursors = new Sprite[3] { gridCursor.GetChild<Sprite>(0), gridCursor.GetChild<Sprite>(1), gridCursor.GetChild<Sprite>(2) };
             selectedPartLabel = GetNode<Label>("SelectedPartLabel");
+            cursorWarning = GetNode<Sprite>("Grid/GridCursor/Warning");
 
             Debug = GetNode<Label>("debug");
 
@@ -95,18 +103,21 @@ namespace Fragile
             Update();
 
             partButtons.Add(Parts.Parts.Body, GetNode<PartButton>("BodyButton"));
-            partButtons.Add(Parts.Parts.Wheel, GetNode<PartButton>("Wheel"));
+            partButtons.Add(Parts.Parts.WheelStandard, GetNode<PartButton>("Wheel"));
             partButtons.Add(Parts.Parts.EngineSmall, GetNode<PartButton>("SmallEngine"));
             partButtons.Add(Parts.Parts.EngineLarge, GetNode<PartButton>("LargeEngine"));
+            partButtons.Add(Parts.Parts.WheelSpring, GetNode<PartButton>("WheelSpring"));
 
             partButtons[Parts.Parts.Body].SetPart(Parts.Parts.Body);
-            partButtons[Parts.Parts.Wheel].SetPart(Parts.Parts.Wheel);
+            partButtons[Parts.Parts.WheelStandard].SetPart(Parts.Parts.WheelStandard);
             partButtons[Parts.Parts.EngineSmall].SetPart(Parts.Parts.EngineSmall);
             partButtons[Parts.Parts.EngineLarge].SetPart(Parts.Parts.EngineLarge);
+            partButtons[Parts.Parts.WheelSpring].SetPart(Parts.Parts.WheelSpring);
 
             foreach (var part in partButtons.Keys)
             {
                 partButtons[part].Connect("pressed", this, nameof(PartButtonPressed), new Godot.Collections.Array() { part });
+                partButtons[part].Connect("mouse_entered", GlobalNodes.INSTANCE, nameof(GlobalNodes.UIClick));
             }
         }
 
@@ -126,12 +137,16 @@ namespace Fragile
             {
                 if (emb.ButtonIndex == (int)ButtonList.Left)
                 {
-                    if (gridCursor.Visible)
+                    if (gridCursor.Visible && cursorClear && cursorConnected)
+                    {
                         TryPlacePart(cursorGridPos, cursorPart);
+                        UpdateGridCursor(cursorGridPos, true);
+                    }
                 }
                 else if (emb.ButtonIndex == (int)ButtonList.Right)
                 {
                     RemovePart(cursorGridPos);
+                    UpdateGridCursor(cursorGridPos, true);
                 }
             }
 
@@ -159,11 +174,18 @@ namespace Fragile
                 {
                     if (!IsGridPointEmpty(x, y))
                     {
-                        if (partsGrid[x, y] is MainPart mainPart)
+                        Part p = partsGrid[x, y];
+
+                        if (p is WheelPart wheelPart)
+                        {
+                            DrawTexture(wheelPart.WheelTex, grid.Position + new Vector2(x * 32, y * 32));
+                            DrawTexture(wheelPart.Texture, grid.Position + new Vector2(x * 32, y * 32));
+                        }
+                        else if (p is MainPart mainPart)
                         {
                             DrawTexture(mainPart.Texture, grid.Position + mainPart.TexOffset + new Vector2(x * 32, y * 32));
                         }
-                        else if (partsGrid[x, y] is RootPart)
+                        else if (p is RootPart)
                         {
                             DrawTexture(rootTex, grid.Position + new Vector2(x * 32, y * 32));
                         }
@@ -240,13 +262,16 @@ namespace Fragile
             }
             else
             {
-                if (partsGrid[point.x, point.y] is MainPart mainPart)
+                if (part is MainPart mainPart)
                 {
                     foreach (Point extraPos in mainPart.ExtraParts)
                     {
                         Point p = point + extraPos;
                         partsGrid[p.x, p.y] = null;
                     }
+
+                    // Refund inventory
+                    partButtons[mainPart].SetCount(++inventory[mainPart]);
                 }
 
                 partsGrid[point.x, point.y] = null;
@@ -342,6 +367,21 @@ namespace Fragile
             return false;
         }
 
+        private static bool IsGridPointConnected(Point point)
+        {
+            bool connected = false;
+            foreach (var dir in FourDirs)
+            {
+                if (IsPointInGrid(point + dir) && !IsGridPointEmpty(point + dir))
+                {
+                    connected = true;
+                    break;
+                }
+            }
+
+            return connected;
+        }
+
         private Vehicle ConstructVehicle(Node parent)
         {
             Vehicle vehicle = new Vehicle();
@@ -365,6 +405,18 @@ namespace Fragile
                         if (p is RootPart)
                         {
                             vehicle.AddSprite(rootTex, pos);
+
+                            Camera2D camera2D = new Camera2D()
+                            {
+                                SmoothingEnabled = true,
+                                Current = true,
+                                LimitLeft = 0,
+                                LimitBottom = 270,
+                                Position = (pos * 32).ToVector2() + new Vector2(128, 64),
+                                ProcessMode = Camera2D.Camera2DProcessMode.Physics
+                            };
+
+                            vehicle.AddChild(camera2D);
                         }
                         else if (p is WheelPart wheelPart)
                         {
@@ -433,6 +485,8 @@ namespace Fragile
                 {
                     cursorGridPos = cursorPoint;
 
+                    GlobalNodes.UIClick();
+
                     gridCursor.Position = (cursorGridPos * 32).ToVector2() + new Vector2(17, 17);
 
                     tween.Stop(gridCursor);
@@ -442,23 +496,44 @@ namespace Fragile
                     tween.Start();
 
                     // Extra parts
-                    bool clear = true;
+                    cursorClear = true;
+                    cursorConnected = false;
 
-                    clear = IsGridPointEmpty(cursorGridPos);
+                    cursorClear = IsGridPointEmpty(cursorGridPos);
+                    cursorConnected = IsGridPointConnected(cursorGridPos);
 
-                    if (clear)
+                    if (cursorClear)
                     {
                         foreach (var extraPos in cursorPart.ExtraParts)
                         {
                             if (!IsGridPointEmpty(cursorGridPos + extraPos))
                             {
-                                clear = false;
+                                cursorClear = false;
                                 break;
+                            }
+                            else if (IsGridPointConnected(cursorGridPos + extraPos))
+                            {
+                                cursorConnected = true;
                             }
                         }
                     }
 
-                    gridCursor.Texture = clear ? gridCursorGreenTex : gridCursorRedTex;
+                    gridCursor.Texture = (cursorClear && cursorConnected) ? gridCursorGreenTex : gridCursorRedTex;
+
+                    if (!cursorClear)
+                    {
+                        cursorWarning.Visible = true;
+                        cursorWarning.Texture = blockedTex;
+                    }
+                    else if (!cursorConnected)
+                    {
+                        cursorWarning.Visible = true;
+                        cursorWarning.Texture = disconnectedTex;
+                    }
+                    else
+                    {
+                        cursorWarning.Visible = false;
+                    }
 
                     for (int i = 0; i < extraGridCursors.Length; i++)
                     {
@@ -503,7 +578,6 @@ namespace Fragile
 
             RemoveDisconnectedParts();
             vehicle = ConstructVehicle(driveWorld);
-            vehicle.SetPositionWithWheels(new Vector2(254, 103));
             driveWorld.SetVehicle(vehicle);
 
             GetTree().Root.AddChild(driveWorld);
