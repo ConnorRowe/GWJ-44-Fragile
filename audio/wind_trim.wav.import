@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/wind_trim.wav-58e2fec31b106ca8c5042723559dc6a3.sample"
+
+[deps]
+
+source_file="res://audio/wind_trim.wav"
+dest_files=[ "res://.import/wind_trim.wav-58e2fec31b106ca8c5042723559dc6a3.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=48000.0
+edit/trim=false
+edit/normalize=false
+edit/loop=true
+compress/mode=0

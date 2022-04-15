@@ -13,28 +13,28 @@ margin_left = 71.0
 margin_right = 456.0
 
 [node name="Label" type="Label" parent="." index="4"]
-margin_left = 256.0
+margin_left = 370.0
 margin_top = 140.0
-margin_right = 422.0
+margin_right = 542.0
 margin_bottom = 154.0
 custom_fonts/font = ExtResource( 3 )
 text = "Welcome to to the endurance test!"
 
 [node name="Label2" type="Label" parent="." index="5"]
-margin_left = 319.0
+margin_left = 433.0
 margin_top = 170.0
-margin_right = 529.0
+margin_right = 643.0
 margin_bottom = 184.0
 custom_fonts/font = ExtResource( 3 )
 text = "Hold W / S to move forwards / backwards."
 
 [node name="Label3" type="Label" parent="." index="6"]
-margin_left = 498.0
+margin_left = 728.0
 margin_top = 120.0
-margin_right = 698.0
+margin_right = 928.0
 margin_bottom = 134.0
 custom_fonts/font = ExtResource( 3 )
 text = "Hold A / D to tilt left / right."
 
 [node name="RootPos" type="Position2D" parent="." index="7"]
-position = Vector2( 280, 120 )
+position = Vector2( 280, 56 )

@@ -19,7 +19,7 @@ namespace Fragile
         private Label fps;
         private float furthestDistance = 0;
 
-        private Vector2 vehicleStartPos = new Vector2(280, 120);
+        public static Vector2 VehicleStartPos { get; } = new Vector2(280, 56);
 
 
         public override void _Ready()
@@ -43,11 +43,13 @@ namespace Fragile
         {
             this.vehicle = vehicle;
 
-            vehicle.SetPositionWithWheels(vehicleStartPos);
+            // vehicle.SetPositionWithWheels(VehicleStartPos);
 
             var selfDestructBtn = GetNode("UI/SelfDestruct");
             selfDestructBtn.Connect("pressed", vehicle, nameof(vehicle.SelfDestruct));
             selfDestructBtn.Connect("mouse_entered", GlobalNodes.INSTANCE, nameof(GlobalNodes.UIClick));
+
+            vehicle.CallDeferred(nameof(vehicle.ActivateCollision));
         }
 
         public override void _Process(float delta)

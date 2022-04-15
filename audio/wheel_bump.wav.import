@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/wheel_bump.wav-4e0e3c381b31f210d80d95a2fc0fcf21.sample"
+
+[deps]
+
+source_file="res://audio/wheel_bump.wav"
+dest_files=[ "res://.import/wheel_bump.wav-4e0e3c381b31f210d80d95a2fc0fcf21.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0

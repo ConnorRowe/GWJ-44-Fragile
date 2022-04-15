@@ -14,6 +14,11 @@ config/name="GWJ-44-Fragile"
 run/main_scene="res://scenes/Construction.tscn"
 config/icon="res://icon.png"
 
+[audio]
+
+driver=""
+output_latency=25
+
 [autoload]
 
 GlobalNodes="*res://scenes/GlobalNodes.tscn"
@@ -84,6 +89,7 @@ g_jump={
 [physics]
 
 common/enable_pause_aware_picking=true
+2d/thread_model=2
 2d/default_gravity=196
 
 [rendering]

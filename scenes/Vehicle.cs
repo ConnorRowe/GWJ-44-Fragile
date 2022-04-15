@@ -26,6 +26,7 @@ namespace Fragile
         private float jumpStrength = 128f;
 
         private Tween tween;
+        private EngineSoundPlayer engineSoundPlayer;
 
         private Dictionary<CollisionShape2D, Point> colliderPoints = new Dictionary<CollisionShape2D, Point>();
         private Dictionary<Point, CollisionShape2D> pointColliders = new Dictionary<Point, CollisionShape2D>();
@@ -52,8 +53,10 @@ namespace Fragile
             tween = new Tween();
             AddChild(tween);
 
-            ContactMonitor = true;
-            ContactsReported = 1;
+            engineSoundPlayer = new EngineSoundPlayer();
+            AddChild(engineSoundPlayer);
+
+            GlobalNodes.WindPlayer.Play();
 
             Connect("body_shape_entered", this, nameof(BodyShapeEntered));
         }
@@ -75,16 +78,23 @@ namespace Fragile
             if ((Input.IsActionJustPressed("g_accelerate") || Input.IsActionJustPressed("g_brake")) && !showSmoke)
             {
                 SetEngineSmokeEmitting(true);
+                if (maxSpeedScale > 0)
+                    engineSoundPlayer.StartEngine();
             }
             else if (showSmoke && !Input.IsActionPressed("g_accelerate") && !Input.IsActionPressed("g_brake"))
             {
                 SetEngineSmokeEmitting(false);
+                if (maxSpeedScale > 0)
+                    engineSoundPlayer.StopEngine();
             }
         }
 
         public override void _PhysicsProcess(float delta)
         {
             base._PhysicsProcess(delta);
+
+            if (Layers == 0)
+                return;
 
             float inputMove = 0f;
             float inputTilt = 0f;
@@ -138,6 +148,15 @@ namespace Fragile
                 else
                     GD.PrintErr($"hitShape == null\nlastColliderHitIndex=={lastColliderHitIndex}");
             }
+            else if (velocityLenDelta > 5f)
+            {
+                GlobalNodes.VehicleBump();
+            }
+
+            //Wind effect
+            float windSpeedScale = Mathf.Clamp(LinearVelocity.LengthSquared() * 0.000005f, 0, 1);
+            GlobalNodes.WindPlayer.VolumeDb = GD.Linear2Db(windSpeedScale);
+            GlobalNodes.WindPitchShift.PitchScale = .8f + (windSpeedScale * .4f);
         }
 
         public void BodyShapeEntered(RID bodyRID, Node body, int bodyShapeIndex, uint localShapeIndex)
@@ -191,11 +210,13 @@ namespace Fragile
             AddSprite(wheelPart.Texture, gridPos);
             AddSquareCollider(gridPos);
 
-            RigidBody2D wheel = new RigidBody2D()
+            RigidBody2D wheel = new WheelBody2D()
             {
                 Mass = 3f,
                 PhysicsMaterialOverride = wheelPhysMat,
-                Position = new Vector2((gridPos.x * 32) + 16, ((gridPos.y + 1) * 32) + 16f)
+                Position = this.Position + new Vector2((gridPos.x * 32) + 16, ((gridPos.y + 1) * 32) + 16f),
+                Layers = 0,
+                GravityScale = 0,
             };
 
             CollisionShape2D collisionShape2D = new CollisionShape2D()
@@ -264,7 +285,7 @@ namespace Fragile
             Position = position;
         }
 
-        private void BreakPart(CollisionShape2D partCollider, bool checkFloating)
+        public void BreakPart(CollisionShape2D partCollider, bool checkFloating)
         {
             if (!colliderPoints.ContainsKey(partCollider))
                 return;
@@ -273,6 +294,7 @@ namespace Fragile
             Part part = Construction.GetGridPart(partPoint + Construction.RootPartPos);
 
             NewNutsNBolts(partCollider.GlobalPosition);
+            GlobalNodes.VehiclePartBreak();
 
             if (part is MainPart mainPart)
             {
@@ -387,6 +409,9 @@ namespace Fragile
         {
             accelerationScale -= enginePart.Acceleration;
             maxSpeedScale -= enginePart.MaxSpeed;
+
+            if (maxSpeedScale == 0f)
+                engineSoundPlayer.StopEngine();
         }
 
         public void AddEngineSmoke(Point gridPos, Vector2 offset)
@@ -465,6 +490,28 @@ namespace Fragile
                 {
                     BreakPart(pointColliders[dir], true);
                 }
+            }
+
+            GlobalNodes.INSTANCE.MakeTntExplosion(GlobalPosition, GetParent());
+        }
+
+        public async void ActivateCollision()
+        {
+            var t = GetTree().CreateTimer(.25f);
+            await ToSignal(t, "timeout");
+
+            GravityScale = 1f;
+            Layers = 1;
+            ContactMonitor = true;
+            ContactsReported = 1;
+
+            LinearVelocity = Vector2.Zero;
+            AngularVelocity = 0f;
+
+            foreach (var wheel in Wheels)
+            {
+                wheel.Layers = 1;
+                wheel.GravityScale = 1;
             }
         }
     }

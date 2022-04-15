@@ -78,8 +78,17 @@ namespace Fragile
         private Tween tween;
         private Label selectedPartLabel;
         private Vehicle vehicle;
+        private AudioStreamPlayer buildPlayer;
+        private AudioStreamPlayer dismantlePlayer;
+        private PartTooltip partTooltip;
         private bool cursorClear;
         private bool cursorConnected;
+        private TextureProgress powerProgress;
+        private TextureProgress weightProgress;
+        private float power = 0;
+        private float weight = 0;
+        private float time;
+        private Label powerWarning;
 
 
         private Dictionary<MainPart, int> inventory = new Dictionary<MainPart, int>() { { Parts.Parts.Body, 99 }, { Parts.Parts.WheelStandard, 99 }, { Parts.Parts.EngineSmall, 99 }, { Parts.Parts.EngineLarge, 99 }, { Parts.Parts.WheelSpring, 99 } };
@@ -95,6 +104,12 @@ namespace Fragile
             extraGridCursors = new Sprite[3] { gridCursor.GetChild<Sprite>(0), gridCursor.GetChild<Sprite>(1), gridCursor.GetChild<Sprite>(2) };
             selectedPartLabel = GetNode<Label>("SelectedPartLabel");
             cursorWarning = GetNode<Sprite>("Grid/GridCursor/Warning");
+            buildPlayer = GetNode<AudioStreamPlayer>("BuildPlayer");
+            dismantlePlayer = GetNode<AudioStreamPlayer>("DismantlePlayer");
+            partTooltip = GetNode<PartTooltip>("PartTooltip");
+            powerProgress = GetNode<TextureProgress>("PowerProgress");
+            weightProgress = GetNode<TextureProgress>("WeightProgress");
+            powerWarning = GetNode<Label>("PowerWarning");
 
             Debug = GetNode<Label>("debug");
 
@@ -118,6 +133,8 @@ namespace Fragile
             {
                 partButtons[part].Connect("pressed", this, nameof(PartButtonPressed), new Godot.Collections.Array() { part });
                 partButtons[part].Connect("mouse_entered", GlobalNodes.INSTANCE, nameof(GlobalNodes.UIClick));
+                partButtons[part].Connect("mouse_entered", this, nameof(ShowTooltip), new Godot.Collections.Array() { part });
+                partButtons[part].Connect("mouse_exited", this, nameof(HideTooltip));
             }
         }
 
@@ -131,7 +148,8 @@ namespace Fragile
                 if (mousePos.x < 0)
                     mousePos.x -= 64f;
                 UpdateGridCursor(new Point(mousePos / 32), false);
-                // Debug.Text = mouseGridPos.ToString();
+
+                partTooltip.RectPosition = emm.Position;
             }
             else if (evt is InputEventMouseButton emb && emb.Pressed)
             {
@@ -160,6 +178,26 @@ namespace Fragile
 
                         break;
                 }
+            }
+        }
+
+        public override void _Process(float delta)
+        {
+            base._Process(delta);
+
+            powerProgress.Value = Mathf.Lerp((float)powerProgress.Value, power * 0.2f, delta * 2f);
+            weightProgress.Value = Mathf.Lerp((float)weightProgress.Value, weight * 0.01f, delta * 2f);
+
+            if (Mathf.IsEqualApprox((float)powerProgress.Value, 0f))
+            {
+                time += delta * 2f;
+                powerWarning.Visible = true;
+                float s = .8f + (Mathf.Cos(time) * .4f);
+                powerWarning.RectScale = new Vector2(s, s);
+            }
+            else
+            {
+                powerWarning.Visible = false;
             }
         }
 
@@ -214,6 +252,10 @@ namespace Fragile
                 {
                     bool allClear = true;
 
+                    weight += mainPart.Mass;
+                    if (mainPart is EnginePart enginePart)
+                        power += enginePart.MaxSpeed;
+
                     foreach (Point extraPos in mainPart.ExtraParts)
                     {
                         if (!IsGridPointEmpty(point + extraPos))
@@ -238,6 +280,8 @@ namespace Fragile
                 }
 
                 Update();
+
+                buildPlayer.Play();
 
                 return true;
             }
@@ -270,6 +314,10 @@ namespace Fragile
                         partsGrid[p.x, p.y] = null;
                     }
 
+                    weight -= mainPart.Mass;
+                    if (mainPart is EnginePart enginePart)
+                        power -= enginePart.MaxSpeed;
+
                     // Refund inventory
                     partButtons[mainPart].SetCount(++inventory[mainPart]);
                 }
@@ -277,6 +325,8 @@ namespace Fragile
                 partsGrid[point.x, point.y] = null;
 
                 Update();
+
+                dismantlePlayer.Play();
 
                 //TODO: check if connected to main vehicle part
                 RemoveDisconnectedParts();
@@ -384,7 +434,12 @@ namespace Fragile
 
         private Vehicle ConstructVehicle(Node parent)
         {
-            Vehicle vehicle = new Vehicle();
+            Vehicle vehicle = new Vehicle()
+            {
+                GravityScale = 0,
+                Layers = 0,
+                Position = DriveWorld.VehicleStartPos
+            };
 
             parent.AddChild(vehicle);
             vehicle.ZIndex = 1;
@@ -582,6 +637,22 @@ namespace Fragile
 
             GetTree().Root.AddChild(driveWorld);
             QueueFree();
+        }
+
+        private void ShowTooltip(MainPart part)
+        {
+            partTooltip.UpdateFromPart(part);
+
+            tween.Stop(partTooltip);
+            tween.InterpolateProperty(partTooltip, "rect_scale", partTooltip.RectScale, Vector2.One, .5f, Tween.TransitionType.Bounce, Tween.EaseType.Out);
+            tween.Start();
+        }
+
+        private void HideTooltip()
+        {
+            tween.Stop(partTooltip);
+            tween.InterpolateProperty(partTooltip, "rect_scale", partTooltip.RectScale, Vector2.Down, .25f, Tween.TransitionType.Bounce, Tween.EaseType.Out);
+            tween.Start();
         }
     }
 }
