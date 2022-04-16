@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://scenes/TntTrap.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scenes/PistonTrap.tscn" type="PackedScene" id=2]
+[ext_resource path="res://scenes/drive_chunks/BaseChunk.tscn" type="PackedScene" id=3]
+
+[node name="BaseChunk" instance=ExtResource( 3 )]
+
+[node name="LevelPolygon" parent="." index="2"]
+polygon = PoolVector2Array( 0, 238, 435, 226, 435, 259, 570, 259, 570, 213, 608, 214, 672.374, 218.389, 706, 211, 740, 188, 778, 159, 796, 154, 829, 154, 853, 160, 872, 173, 938, 232, 960, 238, 960, 270, 0, 270 )
+
+[node name="TntTrap" parent="." index="4" instance=ExtResource( 1 )]
+position = Vector2( 454, 242 )
+
+[node name="TntTrap2" parent="." index="5" instance=ExtResource( 1 )]
+position = Vector2( 487, 242 )
+
+[node name="TntTrap3" parent="." index="6" instance=ExtResource( 1 )]
+position = Vector2( 520, 242 )
+
+[node name="TntTrap4" parent="." index="7" instance=ExtResource( 1 )]
+position = Vector2( 553, 242 )
+
+[node name="PistonTrap" parent="." index="8" instance=ExtResource( 2 )]
+position = Vector2( 613, 220 )
+rotation = -0.785397

@@ -89,10 +89,28 @@ namespace Fragile
         private float weight = 0;
         private float time;
         private Label powerWarning;
+        private int wheelCount = 0;
+        private TransitionRect transitionRect;
 
 
-        private Dictionary<MainPart, int> inventory = new Dictionary<MainPart, int>() { { Parts.Parts.Body, 99 }, { Parts.Parts.WheelStandard, 99 }, { Parts.Parts.EngineSmall, 99 }, { Parts.Parts.EngineLarge, 99 }, { Parts.Parts.WheelSpring, 99 } };
+        private Dictionary<MainPart, int> inventory = new Dictionary<MainPart, int>()
+        {
+            { Parts.Parts.Body, 10 },
+            { Parts.Parts.WheelStandard, 2 },
+            { Parts.Parts.EngineSmall, 2 },
+            { Parts.Parts.EngineLarge, 0 },
+            { Parts.Parts.WheelSpring, 0 },
+            { Parts.Parts.WheelJumbo, 0}
+        };
         private Dictionary<MainPart, PartButton> partButtons = new Dictionary<MainPart, PartButton>();
+        public static Dictionary<int, (MainPart part, int count)[]> MileStoneParts { get; } = new Dictionary<int, (MainPart part, int count)[]>()
+        {
+            { 50, new (MainPart part, int count)[] {(Parts.Parts.Body, 8), (Parts.Parts.EngineSmall, 2)} },
+            { 100, new (MainPart part, int count)[] {(Parts.Parts.EngineLarge, 1), (Parts.Parts.WheelStandard, 2)} },
+            { 200, new (MainPart part, int count)[] {(Parts.Parts.EngineLarge, 2), (Parts.Parts.Body, 16), (Parts.Parts.WheelJumbo, 2)} },
+            { 500, new (MainPart part, int count)[] {(Parts.Parts.WheelSpring, 2), (Parts.Parts.WheelJumbo, 2)} },
+            { 1000, new (MainPart part, int count)[] {(Parts.Parts.Body, 65), (Parts.Parts.EngineLarge, 96), (Parts.Parts.EngineSmall, 95), (Parts.Parts.WheelSpring, 97), (Parts.Parts.WheelStandard, 95), (Parts.Parts.WheelJumbo, 95)} },
+        };
 
         public override void _Ready()
         {
@@ -101,7 +119,7 @@ namespace Fragile
             grid = GetNode<Node2D>("Grid");
             gridCursor = GetNode<Sprite>("Grid/GridCursor");
             tween = GetNode<Tween>("Tween");
-            extraGridCursors = new Sprite[3] { gridCursor.GetChild<Sprite>(0), gridCursor.GetChild<Sprite>(1), gridCursor.GetChild<Sprite>(2) };
+            extraGridCursors = new Sprite[5] { gridCursor.GetChild<Sprite>(0), gridCursor.GetChild<Sprite>(1), gridCursor.GetChild<Sprite>(2), gridCursor.GetChild<Sprite>(3), gridCursor.GetChild<Sprite>(4) };
             selectedPartLabel = GetNode<Label>("SelectedPartLabel");
             cursorWarning = GetNode<Sprite>("Grid/GridCursor/Warning");
             buildPlayer = GetNode<AudioStreamPlayer>("BuildPlayer");
@@ -110,24 +128,26 @@ namespace Fragile
             powerProgress = GetNode<TextureProgress>("PowerProgress");
             weightProgress = GetNode<TextureProgress>("WeightProgress");
             powerWarning = GetNode<Label>("PowerWarning");
+            transitionRect = GetNode<TransitionRect>("TransitionRect");
 
             Debug = GetNode<Label>("debug");
 
             // Place root part
             partsGrid[RootPartPos.x, RootPartPos.y] = Parts.Parts.RootPart;
-            Update();
 
             partButtons.Add(Parts.Parts.Body, GetNode<PartButton>("BodyButton"));
             partButtons.Add(Parts.Parts.WheelStandard, GetNode<PartButton>("Wheel"));
             partButtons.Add(Parts.Parts.EngineSmall, GetNode<PartButton>("SmallEngine"));
             partButtons.Add(Parts.Parts.EngineLarge, GetNode<PartButton>("LargeEngine"));
             partButtons.Add(Parts.Parts.WheelSpring, GetNode<PartButton>("WheelSpring"));
+            partButtons.Add(Parts.Parts.WheelJumbo, GetNode<PartButton>("JumboWheel"));
 
             partButtons[Parts.Parts.Body].SetPart(Parts.Parts.Body);
             partButtons[Parts.Parts.WheelStandard].SetPart(Parts.Parts.WheelStandard);
             partButtons[Parts.Parts.EngineSmall].SetPart(Parts.Parts.EngineSmall);
             partButtons[Parts.Parts.EngineLarge].SetPart(Parts.Parts.EngineLarge);
             partButtons[Parts.Parts.WheelSpring].SetPart(Parts.Parts.WheelSpring);
+            partButtons[Parts.Parts.WheelJumbo].SetPart(Parts.Parts.WheelJumbo);
 
             foreach (var part in partButtons.Keys)
             {
@@ -136,6 +156,15 @@ namespace Fragile
                 partButtons[part].Connect("mouse_entered", this, nameof(ShowTooltip), new Godot.Collections.Array() { part });
                 partButtons[part].Connect("mouse_exited", this, nameof(HideTooltip));
             }
+
+            GetNode("DriveButton").Connect("pressed", this, nameof(SwitchToDriveWorld));
+
+            UnlockMilestoneParts();
+
+            Update();
+
+            transitionRect.FadeIn();
+            transitionRect.Connect(nameof(TransitionRect.Finished), this, nameof(TransitionFinished));
         }
 
         public override void _Input(InputEvent evt)
@@ -167,28 +196,22 @@ namespace Fragile
                     UpdateGridCursor(cursorGridPos, true);
                 }
             }
-
-            if (evt is InputEventKey ek && ek.Pressed)
-            {
-                switch (ek.Scancode)
-                {
-                    case (int)KeyList.Enter:
-                        // Construct vehicle and go to DriveWorld
-                        SwitchToDriveWorld();
-
-                        break;
-                }
-            }
         }
 
         public override void _Process(float delta)
         {
             base._Process(delta);
 
-            powerProgress.Value = Mathf.Lerp((float)powerProgress.Value, power * 0.2f, delta * 2f);
-            weightProgress.Value = Mathf.Lerp((float)weightProgress.Value, weight * 0.01f, delta * 2f);
+            powerProgress.Value = DLerp(powerProgress.Value, power * 0.2f, delta * 3f);
+            weightProgress.Value = DLerp(weightProgress.Value, weight * 0.01f, delta * 3f);
 
-            if (Mathf.IsEqualApprox((float)powerProgress.Value, 0f))
+            if (Mathf.IsEqualApprox((float)powerProgress.Value, power, .03f))
+                powerProgress.Value = power;
+
+            if (Mathf.IsEqualApprox((float)weightProgress.Value, weight, .03f))
+                weightProgress.Value = weight;
+
+            if (power == 0f)
             {
                 time += delta * 2f;
                 powerWarning.Visible = true;
@@ -255,6 +278,8 @@ namespace Fragile
                     weight += mainPart.Mass;
                     if (mainPart is EnginePart enginePart)
                         power += enginePart.MaxSpeed;
+                    if (mainPart is WheelPart wheelPart)
+                        wheelCount++;
 
                     foreach (Point extraPos in mainPart.ExtraParts)
                     {
@@ -317,6 +342,8 @@ namespace Fragile
                     weight -= mainPart.Mass;
                     if (mainPart is EnginePart enginePart)
                         power -= enginePart.MaxSpeed;
+                    if (mainPart is WheelPart wheelPart)
+                        wheelCount++;
 
                     // Refund inventory
                     partButtons[mainPart].SetCount(++inventory[mainPart]);
@@ -497,7 +524,7 @@ namespace Fragile
             return vehicle;
         }
 
-        private void ClearGrid()
+        public static void ClearGrid()
         {
             for (int y = 0; y < GRID_HEIGHT; y++)
             {
@@ -507,8 +534,6 @@ namespace Fragile
                         partsGrid[x, y] = null;
                 }
             }
-
-            Update();
         }
 
         public static Part GetGridPart(Point point)
@@ -623,36 +648,78 @@ namespace Fragile
 
         private void PartButtonPressed(MainPart part)
         {
+            if (inventory[part] == 0)
+                return;
+
             SetCursorPart(part);
             selectedPartLabel.Text = $"Selected part:\n{part.PartName}";
         }
 
         private void SwitchToDriveWorld()
         {
-            DriveWorld driveWorld = GD.Load<PackedScene>("res://scenes/DriveWorld.tscn").Instance<DriveWorld>();
-
-            RemoveDisconnectedParts();
-            vehicle = ConstructVehicle(driveWorld);
-            driveWorld.SetVehicle(vehicle);
-
-            GetTree().Root.AddChild(driveWorld);
-            QueueFree();
+            if (wheelCount > 0)
+            {
+                transitionRect.FadeOut(2f);
+            }
+            else
+            {
+                //Popup
+                GetNode<AcceptDialog>("AcceptDialog").PopupCentered(new Vector2(276, 58));
+            }
         }
 
         private void ShowTooltip(MainPart part)
         {
             partTooltip.UpdateFromPart(part);
 
-            tween.Stop(partTooltip);
-            tween.InterpolateProperty(partTooltip, "rect_scale", partTooltip.RectScale, Vector2.One, .5f, Tween.TransitionType.Bounce, Tween.EaseType.Out);
-            tween.Start();
+            partTooltip.Visible = true;
         }
 
         private void HideTooltip()
         {
-            tween.Stop(partTooltip);
-            tween.InterpolateProperty(partTooltip, "rect_scale", partTooltip.RectScale, Vector2.Down, .25f, Tween.TransitionType.Bounce, Tween.EaseType.Out);
-            tween.Start();
+            partTooltip.Visible = false;
+        }
+
+        private static double DLerp(double a, double b, float t)
+        {
+            return a + (b - a) * t;
+        }
+
+        private void UnlockMilestoneParts()
+        {
+            float maxDist = SaveData.MaxDistance;
+
+            foreach (var milestone in MileStoneParts.Keys)
+            {
+                if (maxDist >= milestone)
+                {
+                    foreach (var parts in MileStoneParts[milestone])
+                    {
+                        inventory[parts.part] += parts.count;
+                    }
+                }
+            }
+
+            foreach (var part in partButtons.Keys)
+            {
+                partButtons[part].SetCount(inventory[part]);
+            }
+        }
+
+        private void TransitionFinished(bool fadeIn)
+        {
+            if (!fadeIn)
+            {
+                // Switch to drive world
+                DriveWorld driveWorld = GD.Load<PackedScene>("res://scenes/DriveWorld.tscn").Instance<DriveWorld>();
+
+                RemoveDisconnectedParts();
+                vehicle = ConstructVehicle(driveWorld);
+                driveWorld.SetVehicle(vehicle);
+
+                GetTree().Root.AddChild(driveWorld);
+                QueueFree();
+            }
         }
     }
 }

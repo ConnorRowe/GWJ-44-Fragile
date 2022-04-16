@@ -10,12 +10,16 @@ namespace Fragile
         private static RectangleShape2D cellShape = new RectangleShape2D() { Extents = new Vector2(16, 16) };
         private static RectangleShape2D springShape = new RectangleShape2D() { Extents = new Vector2(10, 4) };
         private static CircleShape2D wheelShape = new CircleShape2D() { Radius = 16f };
+        private static CircleShape2D wheelJumboShape = new CircleShape2D() { Radius = 24f };
         private static PhysicsMaterial wheelPhysMat = new PhysicsMaterial() { Bounce = .2f, Rough = true, Friction = 1f };
         private static PackedScene engineSmokeScene = GD.Load<PackedScene>("res://scenes/EngineSmoke.tscn");
         private static PackedScene nutsNBoltsScene = GD.Load<PackedScene>("res://scenes/NutsNBolts.tscn");
 
         public List<RigidBody2D> Wheels = new List<RigidBody2D>();
         public List<PinJoint2D> PinJoints = new List<PinJoint2D>();
+
+        [Signal]
+        public delegate void NoMoreEngines();
 
         private float acceleration = 10000f;
         private float maxSpeed = 25f;
@@ -39,7 +43,7 @@ namespace Fragile
 
         private float velocityLenDelta = 0f;
         private Vector2 lastFrameVelocity = Vector2.Zero;
-        private uint lastColliderHitIndex = 0;
+        private int lastColliderHitIndex = -1;
         private bool showSmoke = false;
         private bool canSpring = true;
         private bool isJumping = false;
@@ -139,14 +143,24 @@ namespace Fragile
                 maxVelLenDel = velocityLenDelta;
 
             // Velocity changed sharply - probably hit something
-            if (velocityLenDelta > forceNeededToBreak)
+            if (velocityLenDelta > forceNeededToBreak && lastColliderHitIndex > 0)
             {
-                var hitShape = ShapeOwnerGetOwner(ShapeFindOwner((int)lastColliderHitIndex));
+                try
+                {
+                    var hitShape = ShapeOwnerGetOwner(ShapeFindOwner(lastColliderHitIndex));
 
-                if (hitShape != null && hitShape is CollisionShape2D hitCollisionShape)
-                    BreakPart(hitCollisionShape, true);
-                else
-                    GD.PrintErr($"hitShape == null\nlastColliderHitIndex=={lastColliderHitIndex}");
+                    if (hitShape != null && hitShape is CollisionShape2D hitCollisionShape)
+                    {
+                        BreakPart(hitCollisionShape, true);
+                        lastColliderHitIndex = -1;
+                    }
+                    else
+                        GD.PrintErr($"hitShape == null\nlastColliderHitIndex=={lastColliderHitIndex}");
+                }
+                catch (System.Exception e)
+                {
+                    GD.Print($"oopsie ... {e.Message}");
+                }
             }
             else if (velocityLenDelta > 5f)
             {
@@ -163,7 +177,7 @@ namespace Fragile
         {
             // Saves index of the last hit shape so it knows which part should break
             if (!springShapeIdxs.Contains((int)localShapeIndex))
-                lastColliderHitIndex = localShapeIndex;
+                lastColliderHitIndex = (int)localShapeIndex;
 
             // GD.Print($"BodyShapeEntered({bodyRID.ToString()}, {body}, {bodyShapeIndex}, {localShapeIndex})");
         }
@@ -210,6 +224,11 @@ namespace Fragile
             AddSprite(wheelPart.Texture, gridPos);
             AddSquareCollider(gridPos);
 
+            bool jumbo = wheelPart is Parts.JumboWheelPart;
+
+            if (jumbo)
+                AddSquareCollider(gridPos + new Point(1, 0));
+
             RigidBody2D wheel = new WheelBody2D()
             {
                 Mass = 3f,
@@ -219,9 +238,12 @@ namespace Fragile
                 GravityScale = 0,
             };
 
+            if (jumbo)
+                wheel.Position = this.Position + new Vector2((gridPos.x + 1) * 32, ((gridPos.y + 2) * 32) + 16f);
+
             CollisionShape2D collisionShape2D = new CollisionShape2D()
             {
-                Shape = wheelShape
+                Shape = jumbo ? wheelJumboShape : wheelShape
             };
 
             GetParent().AddChild(wheel);
@@ -230,7 +252,7 @@ namespace Fragile
             Sprite wheelSprite = new Sprite()
             {
                 Texture = wheelPart.WheelTex,
-                Offset = new Vector2(0, -16),
+                Offset = new Vector2(0, jumbo ? -24 : -16),
             };
 
             wheel.AddChild(wheelSprite);
@@ -336,6 +358,13 @@ namespace Fragile
                     {
                         RemoveEngineStats(enginePart);
                         RemoveEngineSmoke(partPoint);
+
+                        if (maxSpeedScale == 0f)
+                        {
+                            engineSoundPlayer.StopEngine();
+                            EmitSignal(nameof(NoMoreEngines));
+                            GlobalNodes.INSTANCE.MakeTntExplosion(Position, GetParent());
+                        }
                     }
 
                     if (mainPart is WheelPart wheelPart)
@@ -356,6 +385,19 @@ namespace Fragile
                             springWheels.RemoveAt(idx);
                             springs[idx].QueueFree();
                             springs.RemoveAt(idx);
+                        }
+
+                        if (wheelPart is JumboWheelPart)
+                        {
+                            var extraJumboCollider = pointColliders[partPoint + new Point(1, 0)];
+                            RemoveChild(extraJumboCollider);
+                            brokenPart.AddChild(extraJumboCollider);
+                            extraJumboCollider.Position = new Vector2(48, 16);
+
+                            foreach (var extraOffset in wheelPart.ExtraParts)
+                            {
+                                Construction.SetGridPart(partPoint + extraOffset + Construction.RootPartPos, null);
+                            }
                         }
                     }
                     else
@@ -409,9 +451,6 @@ namespace Fragile
         {
             accelerationScale -= enginePart.Acceleration;
             maxSpeedScale -= enginePart.MaxSpeed;
-
-            if (maxSpeedScale == 0f)
-                engineSoundPlayer.StopEngine();
         }
 
         public void AddEngineSmoke(Point gridPos, Vector2 offset)
@@ -439,21 +478,21 @@ namespace Fragile
             showSmoke = emit;
         }
 
-        private async void NewNutsNBolts(Vector2 position)
+        private void NewNutsNBolts(Vector2 position)
         {
             var p = nutsNBoltsScene.Instance<Particles2D>();
             p.Emitting = true;
             GetParent().AddChild(p);
             p.Position = position;
 
-            var timer = GetTree().CreateTimer(p.Lifetime);
-            await ToSignal(timer, "timeout");
-
-            p.QueueFree();
+            GetTree().CreateTimer(p.Lifetime).Connect("timeout", p, "queue_free");
         }
 
         private async void SpringJump()
         {
+            if (springs.Count == 0)
+                return;
+
             canSpring = false;
             isJumping = true;
 
@@ -491,8 +530,6 @@ namespace Fragile
                     BreakPart(pointColliders[dir], true);
                 }
             }
-
-            GlobalNodes.INSTANCE.MakeTntExplosion(GlobalPosition, GetParent());
         }
 
         public async void ActivateCollision()

@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=2]
+[gd_scene load_steps=14 format=2]
 
 [ext_resource path="res://scenes/GlobalNodes.cs" type="Script" id=1]
 [ext_resource path="res://audio/ui_click.wav" type="AudioStream" id=2]
@@ -7,6 +7,7 @@
 [ext_resource path="res://audio/wheel_bump.wav" type="AudioStream" id=5]
 [ext_resource path="res://audio/wind_trim.wav" type="AudioStream" id=6]
 [ext_resource path="res://audio/explosion.wav" type="AudioStream" id=7]
+[ext_resource path="res://audio/theme_mix.ogg" type="AudioStream" id=8]
 
 [sub_resource type="AudioStreamRandomPitch" id=1]
 audio_stream = ExtResource( 2 )
@@ -36,10 +37,12 @@ bus = "SFX"
 
 [node name="BumpPlayer" type="AudioStreamPlayer" parent="."]
 stream = SubResource( 2 )
+volume_db = -2.286
 bus = "SFX"
 
 [node name="SmashPlayer" type="AudioStreamPlayer" parent="."]
 stream = SubResource( 3 )
+volume_db = -1.524
 bus = "SFX"
 
 [node name="WheelBumpPlayer" type="AudioStreamPlayer" parent="."]
@@ -54,3 +57,9 @@ bus = "Wind"
 [node name="ExplosionPlayer" type="AudioStreamPlayer" parent="."]
 stream = SubResource( 5 )
 bus = "SFX"
+
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 8 )
+volume_db = -4.19
+autoplay = true
+bus = "Music"

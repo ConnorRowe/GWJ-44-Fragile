@@ -78,7 +78,7 @@ namespace Fragile
                         }
                         else
                         {
-                            rigidBody2D.ApplyImpulse(rigidBody2D.Position - GlobalPosition, GlobalPosition.DirectionTo(rigidBody2D.Position) * 500f);
+                            rigidBody2D.ApplyImpulse(rigidBody2D.Position - GlobalPosition, GlobalPosition.DirectionTo(rigidBody2D.Position) * 250f);
                         }
                     }
                 }
@@ -118,7 +118,8 @@ namespace Fragile
 
         private void BodyEntered(Node node)
         {
-            Activate();
+            if (node is RigidBody2D)
+                Activate();
         }
 
         private void Activate()

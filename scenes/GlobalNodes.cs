@@ -67,6 +67,8 @@ namespace Fragile
             WindPlayer = GetNode<AudioStreamPlayer>("WindPlayer");
             explosionPlayer = GetNode<AudioStreamPlayer>("ExplosionPlayer");
             WindPitchShift = (AudioEffectPitchShift)AudioServer.GetBusEffect(AudioServer.GetBusIndex("Wind"), 1);
+
+            GD.Print($"Loaded max_distance as [{SaveData.MaxDistance}]");
         }
 
         public void MakeTntExplosion(Vector2 pos, Node parent)

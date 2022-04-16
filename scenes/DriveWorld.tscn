@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=26 format=2]
 
 [ext_resource path="res://fonts/NormalOutlined.tres" type="DynamicFont" id=1]
 [ext_resource path="res://scenes/DriveWorld.cs" type="Script" id=2]
@@ -8,9 +8,71 @@
 [ext_resource path="res://textures/self_destruct_pressed.png" type="Texture" id=6]
 [ext_resource path="res://textures/self_destruct_hover.png" type="Texture" id=7]
 [ext_resource path="res://textures/self_destruct_clickmask.png" type="BitMap" id=8]
+[ext_resource path="res://textures/checker_bg.png" type="Texture" id=9]
+[ext_resource path="res://textures/tooltip.png" type="Texture" id=10]
+[ext_resource path="res://textures/button_disabled.png" type="Texture" id=11]
+[ext_resource path="res://textures/button_hover.png" type="Texture" id=12]
+[ext_resource path="res://textures/button_normal.png" type="Texture" id=13]
+[ext_resource path="res://textures/button_pressed.png" type="Texture" id=14]
+[ext_resource path="res://fonts/consfont.ttf" type="DynamicFontData" id=15]
+[ext_resource path="res://fonts/Normal.tres" type="DynamicFont" id=16]
+[ext_resource path="res://scenes/TransitionRect.tscn" type="PackedScene" id=17]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 10, 713 )
+
+[sub_resource type="StyleBoxTexture" id=2]
+texture = ExtResource( 9 )
+region_rect = Rect2( 0, 0, 8, 8 )
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+modulate_color = Color( 1, 1, 1, 0.509804 )
+
+[sub_resource type="StyleBoxTexture" id=3]
+content_margin_left = 20.0
+content_margin_right = 20.0
+content_margin_top = 20.0
+content_margin_bottom = 20.0
+texture = ExtResource( 10 )
+region_rect = Rect2( 0, 0, 76, 36 )
+margin_left = 36.0
+margin_right = 36.0
+margin_top = 18.0
+margin_bottom = 18.0
+
+[sub_resource type="DynamicFont" id=5]
+size = 10
+outline_size = 1
+outline_color = Color( 0.156863, 0.207843, 0.25098, 1 )
+extra_spacing_top = -2
+extra_spacing_bottom = -2
+extra_spacing_char = 1
+extra_spacing_space = 1
+font_data = ExtResource( 15 )
+
+[sub_resource type="StyleBoxTexture" id=6]
+texture = ExtResource( 12 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 1.0
+margin_bottom = 3.0
+
+[sub_resource type="StyleBoxTexture" id=4]
+texture = ExtResource( 14 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 3.0
+margin_bottom = 1.0
+
+[sub_resource type="StyleBoxTexture" id=7]
+texture = ExtResource( 13 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 1.0
+margin_bottom = 3.0
+
+[sub_resource type="StyleBoxTexture" id=8]
+texture = ExtResource( 11 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 1.0
+margin_bottom = 3.0
 
 [node name="DriveWorld" type="Node2D"]
 script = ExtResource( 2 )
@@ -58,12 +120,23 @@ shape = SubResource( 1 )
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="DistanceLabel" type="Label" parent="UI"]
-margin_left = 401.0
+margin_left = 340.0
 margin_top = 8.0
 margin_right = 475.0
 margin_bottom = 21.0
 custom_colors/font_color = Color( 0.960784, 1, 0.909804, 1 )
 custom_colors/font_outline_modulate = Color( 0.0784314, 0.0941176, 0.180392, 1 )
+custom_fonts/font = ExtResource( 1 )
+text = "0m"
+align = 2
+
+[node name="PersonalBestLabel" type="Label" parent="UI"]
+margin_left = 401.0
+margin_top = 22.0
+margin_right = 475.0
+margin_bottom = 35.0
+custom_colors/font_color = Color( 0.960784, 1, 0.909804, 0.345098 )
+custom_colors/font_outline_modulate = Color( 0.0784314, 0.0941176, 0.180392, 0.278431 )
 custom_fonts/font = ExtResource( 1 )
 text = "0m"
 align = 2
@@ -92,3 +165,153 @@ texture_hover = ExtResource( 7 )
 texture_disabled = ExtResource( 5 )
 texture_focused = ExtResource( 5 )
 texture_click_mask = ExtResource( 8 )
+
+[node name="EndOfRunUI" type="CanvasLayer" parent="."]
+
+[node name="Panel" type="Panel" parent="EndOfRunUI"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_styles/panel = SubResource( 2 )
+
+[node name="MarginContainer" type="MarginContainer" parent="EndOfRunUI/Panel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_constants/margin_right = 60
+custom_constants/margin_top = 60
+custom_constants/margin_left = 60
+custom_constants/margin_bottom = 63
+
+[node name="Panel" type="Panel" parent="EndOfRunUI/Panel/MarginContainer"]
+self_modulate = Color( 1, 1, 1, 0.776471 )
+margin_left = 60.0
+margin_top = 60.0
+margin_right = 420.0
+margin_bottom = 207.0
+custom_styles/panel = SubResource( 3 )
+
+[node name="MarginContainer" type="MarginContainer" parent="EndOfRunUI/Panel/MarginContainer/Panel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_constants/margin_right = 12
+custom_constants/margin_top = 14
+custom_constants/margin_left = 12
+custom_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer"]
+margin_left = 12.0
+margin_top = 14.0
+margin_right = 348.0
+margin_bottom = 135.0
+
+[node name="Title" type="Label" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer"]
+margin_right = 336.0
+margin_bottom = 12.0
+custom_colors/font_color = Color( 0.960784, 1, 0.909804, 1 )
+custom_colors/font_outline_modulate = Color( 0.105882, 0.121569, 0.129412, 1 )
+custom_fonts/font = ExtResource( 1 )
+text = "Nice run!"
+align = 1
+
+[node name="Title2" type="Label" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer"]
+margin_top = 16.0
+margin_right = 336.0
+margin_bottom = 28.0
+custom_colors/font_color = Color( 0.960784, 1, 0.909804, 1 )
+custom_colors/font_outline_modulate = Color( 0.105882, 0.121569, 0.129412, 1 )
+custom_fonts/font = ExtResource( 1 )
+text = "You travelled 450m before your fragile vehicle collapsed."
+align = 1
+
+[node name="RichTextLabel" type="RichTextLabel" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer"]
+margin_top = 32.0
+margin_right = 336.0
+margin_bottom = 60.0
+rect_min_size = Vector2( 200, 0 )
+size_flags_horizontal = 5
+size_flags_vertical = 3
+custom_colors/default_color = Color( 1, 1, 1, 1 )
+custom_fonts/normal_font = ExtResource( 1 )
+bbcode_enabled = true
+bbcode_text = "[center][rainbow freq=0.2 sat=10 val=20][wave amp=50 freq=2]
+New personal best![/wave][/rainbow][/center]"
+text = "[center][rainbow freq=0.2 sat=10 val=20][wave amp=50 freq=2]
+New personal best![/wave][/rainbow][/center]"
+scroll_active = false
+
+[node name="RichTextLabel2" type="RichTextLabel" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer"]
+margin_top = 64.0
+margin_right = 336.0
+margin_bottom = 88.0
+rect_min_size = Vector2( 200, 0 )
+size_flags_horizontal = 5
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.85
+custom_colors/default_color = Color( 1, 1, 1, 1 )
+custom_constants/line_separation = -6
+custom_fonts/normal_font = ExtResource( 16 )
+bbcode_enabled = true
+bbcode_text = "[center][rainbow freq=.05 sat=.5 val=.8][wave amp=10 freq=-2]
+Unlocked new parts![/wave][/rainbow][/center]"
+text = "
+Unlocked new parts!"
+scroll_active = false
+
+[node name="MarginContainer" type="MarginContainer" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer"]
+margin_top = 92.0
+margin_right = 336.0
+margin_bottom = 121.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_constants/margin_right = 36
+custom_constants/margin_left = 36
+
+[node name="HBoxContainer" type="HBoxContainer" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer"]
+margin_left = 36.0
+margin_right = 300.0
+margin_bottom = 29.0
+
+[node name="RestartButton" type="Button" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer"]
+margin_right = 184.0
+margin_bottom = 29.0
+rect_min_size = Vector2( 42, 20 )
+rect_clip_content = true
+focus_mode = 0
+mouse_default_cursor_shape = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.44
+custom_colors/font_color = Color( 0.388235, 0.670588, 0.247059, 1 )
+custom_fonts/font = SubResource( 5 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 8 )
+custom_styles/normal = SubResource( 7 )
+shortcut_in_tooltip = false
+enabled_focus_mode = 0
+text = "Restart!"
+
+[node name="QuitButton2" type="Button" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer"]
+modulate = Color( 1, 0.462745, 0.462745, 1 )
+margin_left = 188.0
+margin_right = 264.0
+margin_bottom = 29.0
+rect_min_size = Vector2( 42, 20 )
+rect_clip_content = true
+focus_mode = 0
+mouse_default_cursor_shape = 2
+size_flags_horizontal = 3
+custom_colors/font_color = Color( 0.388235, 0.670588, 0.247059, 1 )
+custom_fonts/font = SubResource( 5 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 8 )
+custom_styles/normal = SubResource( 7 )
+shortcut_in_tooltip = false
+enabled_focus_mode = 0
+text = "Quit :("
+
+[node name="TransitionRect" parent="EndOfRunUI" instance=ExtResource( 17 )]
+
+[node name="Tween" type="Tween" parent="."]

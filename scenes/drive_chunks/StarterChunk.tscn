@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://scenes/DriveChunks/BaseChunk.tscn" type="PackedScene" id=1]
-[ext_resource path="res://fonts/Normal.tres" type="DynamicFont" id=3]
+[ext_resource path="res://scenes/drive_chunks/BaseChunk.tscn" type="PackedScene" id=1]
+[ext_resource path="res://fonts/NormalOutlined.tres" type="DynamicFont" id=2]
 
 [node name="BaseChunk" instance=ExtResource( 1 )]
 
@@ -17,7 +17,8 @@ margin_left = 370.0
 margin_top = 140.0
 margin_right = 542.0
 margin_bottom = 154.0
-custom_fonts/font = ExtResource( 3 )
+custom_colors/font_outline_modulate = Color( 0.156863, 0.207843, 0.25098, 1 )
+custom_fonts/font = ExtResource( 2 )
 text = "Welcome to to the endurance test!"
 
 [node name="Label2" type="Label" parent="." index="5"]
@@ -25,7 +26,8 @@ margin_left = 433.0
 margin_top = 170.0
 margin_right = 643.0
 margin_bottom = 184.0
-custom_fonts/font = ExtResource( 3 )
+custom_colors/font_outline_modulate = Color( 0.156863, 0.207843, 0.25098, 1 )
+custom_fonts/font = ExtResource( 2 )
 text = "Hold W / S to move forwards / backwards."
 
 [node name="Label3" type="Label" parent="." index="6"]
@@ -33,7 +35,8 @@ margin_left = 728.0
 margin_top = 120.0
 margin_right = 928.0
 margin_bottom = 134.0
-custom_fonts/font = ExtResource( 3 )
+custom_colors/font_outline_modulate = Color( 0.156863, 0.207843, 0.25098, 1 )
+custom_fonts/font = ExtResource( 2 )
 text = "Hold A / D to tilt left / right."
 
 [node name="RootPos" type="Position2D" parent="." index="7"]

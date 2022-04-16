@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://textures/checker_bg.png" type="Texture" id=1]
-[ext_resource path="res://scenes/LevelPolygon.cs" type="Script" id=2]
-[ext_resource path="res://textures/grid_cell.png" type="Texture" id=3]
+[ext_resource path="res://textures/grid_cell.png" type="Texture" id=1]
+[ext_resource path="res://textures/checker_bg.png" type="Texture" id=2]
+[ext_resource path="res://scenes/LevelPolygon.cs" type="Script" id=3]
 
 [node name="BaseChunk" type="Node2D"]
 
@@ -13,9 +13,9 @@ position = Vector2( 0, 238 )
 position = Vector2( 960, 238 )
 
 [node name="LevelPolygon" type="Polygon2D" parent="."]
-texture = ExtResource( 1 )
+texture = ExtResource( 2 )
 polygon = PoolVector2Array( 0, 238, 960, 238, 960, 270, 0, 270 )
-script = ExtResource( 2 )
+script = ExtResource( 3 )
 OutlineColour = Color( 0.160784, 0.113725, 0.168627, 1 )
 Thickness = 2.5
 
@@ -26,5 +26,5 @@ margin_left = 16.0
 margin_top = -25.0
 margin_right = 401.0
 margin_bottom = 232.0
-texture = ExtResource( 3 )
+texture = ExtResource( 1 )
 stretch_mode = 2

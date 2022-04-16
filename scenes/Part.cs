@@ -51,6 +51,14 @@ namespace Fragile.Parts
             GD.Load<Texture>("res://textures/axle_spring.png"),
             GD.Load<Texture>("res://textures/wheel_spring.png")
         );
+        public static JumboWheelPart WheelJumbo = new JumboWheelPart
+        (
+            12,
+            "Jumbo Wheel",
+            "Like a standard wheel, but jumbo :D",
+            GD.Load<Texture>("res://textures/axle_jumbo.png"),
+            GD.Load<Texture>("res://textures/wheel_jumbo.png")
+        );
     }
 
     public abstract class Part : Godot.Object
@@ -75,7 +83,7 @@ namespace Fragile.Parts
     public class MainPart : Part
     {
         public int Mass { get; }
-        public Point[] ExtraParts { get; } = new Point[0];
+        public Point[] ExtraParts { get; protected set; } = new Point[0];
         public Texture Texture { get; }
         public Vector2 TexOffset { get; }
 
@@ -94,13 +102,21 @@ namespace Fragile.Parts
         }
     }
 
-    public sealed class WheelPart : MainPart
+    public class WheelPart : MainPart
     {
         public Texture WheelTex { get; }
 
         public WheelPart(int mass, string partName, string partDesc, Texture partTexture, Texture wheelTexture) : base(mass, partName, partDesc, partTexture, Vector2.Zero, new Point[] { new Point(0, 1) })
         {
             WheelTex = wheelTexture;
+        }
+    }
+
+    public sealed class JumboWheelPart : WheelPart
+    {
+        public JumboWheelPart(int mass, string partName, string partDesc, Texture partTexture, Texture wheelTexture) : base(mass, partName, partDesc, partTexture, wheelTexture)
+        {
+            this.ExtraParts = new Point[] { new Point(1, 0), new Point(0, 1), new Point(1, 1), new Point(0, 2), new Point(1, 2) };
         }
     }
 

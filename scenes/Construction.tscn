@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=2]
+[gd_scene load_steps=52 format=2]
 
 [ext_resource path="res://scenes/Construction.cs" type="Script" id=1]
 [ext_resource path="res://textures/grid_cell.png" type="Texture" id=2]
@@ -15,6 +15,13 @@
 [ext_resource path="res://textures/weight_over.png" type="Texture" id=13]
 [ext_resource path="res://textures/weight_dial_fill.png" type="Texture" id=14]
 [ext_resource path="res://fonts/NormalOutlined.tres" type="DynamicFont" id=15]
+[ext_resource path="res://textures/button_disabled.png" type="Texture" id=16]
+[ext_resource path="res://textures/button_hover.png" type="Texture" id=17]
+[ext_resource path="res://textures/button_normal.png" type="Texture" id=18]
+[ext_resource path="res://textures/button_pressed.png" type="Texture" id=19]
+[ext_resource path="res://fonts/consfont.ttf" type="DynamicFontData" id=20]
+[ext_resource path="res://textures/blocked.png" type="Texture" id=21]
+[ext_resource path="res://scenes/TransitionRect.tscn" type="PackedScene" id=22]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 256, 11 )
@@ -44,10 +51,16 @@ scancode = 52
 shortcut = SubResource( 10 )
 
 [sub_resource type="InputEventKey" id=11]
-scancode = 53
+scancode = 54
 
 [sub_resource type="ShortCut" id=12]
 shortcut = SubResource( 11 )
+
+[sub_resource type="InputEventKey" id=30]
+scancode = 53
+
+[sub_resource type="ShortCut" id=31]
+shortcut = SubResource( 30 )
 
 [sub_resource type="AudioStreamRandomPitch" id=13]
 audio_stream = ExtResource( 7 )
@@ -56,6 +69,106 @@ random_pitch = 1.05
 [sub_resource type="AudioStreamRandomPitch" id=14]
 audio_stream = ExtResource( 8 )
 
+[sub_resource type="DynamicFont" id=15]
+size = 10
+outline_size = 1
+outline_color = Color( 0.156863, 0.207843, 0.25098, 1 )
+extra_spacing_top = -2
+extra_spacing_bottom = -2
+extra_spacing_char = 1
+extra_spacing_space = 1
+font_data = ExtResource( 20 )
+
+[sub_resource type="StyleBoxTexture" id=16]
+texture = ExtResource( 17 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 1.0
+margin_bottom = 3.0
+
+[sub_resource type="StyleBoxTexture" id=17]
+texture = ExtResource( 19 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 3.0
+margin_bottom = 1.0
+
+[sub_resource type="StyleBoxTexture" id=18]
+texture = ExtResource( 18 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 1.0
+margin_bottom = 3.0
+
+[sub_resource type="StyleBoxTexture" id=19]
+texture = ExtResource( 16 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 1.0
+margin_bottom = 3.0
+
+[sub_resource type="InputEventKey" id=28]
+scancode = 16777221
+
+[sub_resource type="ShortCut" id=29]
+shortcut = SubResource( 28 )
+
+[sub_resource type="DynamicFont" id=27]
+size = 10
+outline_size = 1
+outline_color = Color( 0.156863, 0.207843, 0.25098, 1 )
+extra_spacing_top = -2
+font_data = ExtResource( 20 )
+
+[sub_resource type="StyleBoxTexture" id=22]
+texture = ExtResource( 16 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 1.0
+margin_bottom = 3.0
+
+[sub_resource type="StyleBoxTexture" id=23]
+texture = ExtResource( 18 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 1.0
+margin_bottom = 3.0
+
+[sub_resource type="StyleBoxTexture" id=24]
+texture = ExtResource( 17 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 1.0
+margin_bottom = 3.0
+
+[sub_resource type="StyleBoxTexture" id=25]
+texture = ExtResource( 19 )
+region_rect = Rect2( 0, 0, 7, 9 )
+margin_top = 3.0
+margin_bottom = 1.0
+
+[sub_resource type="StyleBoxFlat" id=26]
+bg_color = Color( 0.239216, 0.160784, 0.211765, 1 )
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color( 0.160784, 0.113725, 0.168627, 1 )
+shadow_color = Color( 0.160784, 0.113725, 0.168627, 0.784314 )
+shadow_size = 2587
+
+[sub_resource type="Theme" id=21]
+Button/fonts/font = SubResource( 27 )
+Button/styles/disabled = SubResource( 22 )
+Button/styles/focus = SubResource( 23 )
+Button/styles/hover = SubResource( 24 )
+Button/styles/normal = SubResource( 23 )
+Button/styles/pressed = SubResource( 25 )
+Label/fonts/font = ExtResource( 6 )
+LineEdit/fonts/font = ExtResource( 6 )
+TextEdit/fonts/font = ExtResource( 6 )
+WindowDialog/colors/title_color = Color( 0, 0, 0, 0 )
+WindowDialog/constants/close_h_ofs = 37
+WindowDialog/constants/close_v_ofs = -5
+WindowDialog/constants/title_height = 0
+WindowDialog/fonts/title_font = ExtResource( 6 )
+WindowDialog/icons/close = ExtResource( 21 )
+WindowDialog/icons/close_highlight = ExtResource( 21 )
+WindowDialog/styles/panel = SubResource( 26 )
+
 [node name="Construction" type="Node2D"]
 script = ExtResource( 1 )
 
@@ -63,6 +176,7 @@ script = ExtResource( 1 )
 show_behind_parent = true
 margin_right = 480.0
 margin_bottom = 270.0
+rect_pivot_offset = Vector2( 0, -1 )
 texture = ExtResource( 4 )
 stretch_mode = 2
 
@@ -130,6 +244,14 @@ texture = ExtResource( 3 )
 show_behind_parent = true
 texture = ExtResource( 3 )
 
+[node name="Extra4" type="Sprite" parent="Grid/GridCursor"]
+show_behind_parent = true
+texture = ExtResource( 3 )
+
+[node name="Extra5" type="Sprite" parent="Grid/GridCursor"]
+show_behind_parent = true
+texture = ExtResource( 3 )
+
 [node name="Warning" type="Sprite" parent="Grid/GridCursor"]
 
 [node name="debug" type="Label" parent="."]
@@ -143,9 +265,9 @@ autowrap = true
 
 [node name="SelectedPartLabel" type="Label" parent="."]
 margin_left = 8.0
-margin_top = 8.0
+margin_top = 3.0
 margin_right = 81.0
-margin_bottom = 35.0
+margin_bottom = 30.0
 custom_colors/font_color = Color( 0.388235, 0.670588, 0.247059, 1 )
 custom_fonts/font = ExtResource( 6 )
 text = "Selected Part:
@@ -153,38 +275,45 @@ Body"
 
 [node name="BodyButton" parent="." instance=ExtResource( 5 )]
 margin_left = 4.0
-margin_top = 40.0
+margin_top = 31.0
 margin_right = 46.0
-margin_bottom = 82.0
+margin_bottom = 69.0
 shortcut = SubResource( 3 )
 
 [node name="Wheel" parent="." instance=ExtResource( 5 )]
 margin_left = 48.0
-margin_top = 40.0
+margin_top = 31.0
 margin_right = 90.0
-margin_bottom = 82.0
+margin_bottom = 69.0
 shortcut = SubResource( 5 )
 
 [node name="SmallEngine" parent="." instance=ExtResource( 5 )]
 margin_left = 4.0
-margin_top = 86.0
+margin_top = 71.0
 margin_right = 46.0
-margin_bottom = 128.0
+margin_bottom = 109.0
 shortcut = SubResource( 7 )
 
 [node name="LargeEngine" parent="." instance=ExtResource( 5 )]
 margin_left = 48.0
-margin_top = 86.0
+margin_top = 71.0
 margin_right = 90.0
-margin_bottom = 128.0
+margin_bottom = 109.0
 shortcut = SubResource( 9 )
 
 [node name="WheelSpring" parent="." instance=ExtResource( 5 )]
-margin_left = 4.0
-margin_top = 132.0
-margin_right = 46.0
-margin_bottom = 174.0
+margin_left = 48.0
+margin_top = 111.0
+margin_right = 90.0
+margin_bottom = 149.0
 shortcut = SubResource( 12 )
+
+[node name="JumboWheel" parent="." instance=ExtResource( 5 )]
+margin_left = 4.0
+margin_top = 111.0
+margin_right = 46.0
+margin_bottom = 149.0
+shortcut = SubResource( 31 )
 
 [node name="BuildPlayer" type="AudioStreamPlayer" parent="."]
 stream = SubResource( 13 )
@@ -196,16 +325,11 @@ stream = SubResource( 14 )
 volume_db = -11.429
 bus = "SFX"
 
-[node name="PartTooltip" parent="." instance=ExtResource( 9 )]
-margin_right = 190.0
-margin_bottom = 90.0
-rect_scale = Vector2( 1e-05, 1 )
-
 [node name="PowerProgress" type="TextureProgress" parent="."]
-margin_left = 5.0
-margin_top = 181.0
-margin_right = 53.0
-margin_bottom = 229.0
+margin_left = 4.0
+margin_top = 150.0
+margin_right = 52.0
+margin_bottom = 198.0
 max_value = 1.0
 step = 0.001
 texture_under = ExtResource( 10 )
@@ -215,9 +339,9 @@ fill_mode = 5
 
 [node name="WeightProgress" type="TextureProgress" parent="."]
 margin_left = 40.0
-margin_top = 215.0
+margin_top = 183.0
 margin_right = 88.0
-margin_bottom = 263.0
+margin_bottom = 231.0
 max_value = 1.0
 step = 0.001
 texture_under = ExtResource( 10 )
@@ -226,12 +350,55 @@ texture_progress = ExtResource( 14 )
 fill_mode = 5
 
 [node name="PowerWarning" type="Label" parent="."]
-margin_left = 3.0
-margin_top = 185.0
-margin_right = 93.0
-margin_bottom = 197.0
+margin_left = 2.0
+margin_top = 159.0
+margin_right = 92.0
+margin_bottom = 171.0
 rect_pivot_offset = Vector2( 26, 9 )
 custom_colors/font_color = Color( 0.960784, 1, 0.909804, 1 )
 custom_colors/font_outline_modulate = Color( 0.470588, 0.113725, 0.309804, 1 )
 custom_fonts/font = ExtResource( 15 )
 text = "NEEDS MORE POWER"
+
+[node name="PartTooltip" parent="." instance=ExtResource( 9 )]
+visible = false
+margin_right = 190.0
+margin_bottom = 90.0
+
+[node name="DriveButton" type="Button" parent="."]
+margin_left = 5.0
+margin_top = 233.0
+margin_right = 89.0
+margin_bottom = 269.0
+rect_min_size = Vector2( 42, 20 )
+rect_clip_content = true
+focus_mode = 0
+mouse_default_cursor_shape = 2
+size_flags_horizontal = 3
+custom_colors/font_color = Color( 1, 0.933333, 0.513726, 1 )
+custom_fonts/font = SubResource( 15 )
+custom_styles/hover = SubResource( 16 )
+custom_styles/pressed = SubResource( 17 )
+custom_styles/focus = SubResource( 18 )
+custom_styles/disabled = SubResource( 19 )
+custom_styles/normal = SubResource( 18 )
+shortcut_in_tooltip = false
+enabled_focus_mode = 0
+shortcut = SubResource( 29 )
+text = "Drive! >>"
+
+[node name="AcceptDialog" type="AcceptDialog" parent="."]
+margin_left = 106.0
+margin_top = 78.0
+margin_right = 382.0
+margin_bottom = 136.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = SubResource( 21 )
+popup_exclusive = true
+window_title = ""
+dialog_text = "make sure ya got wheels and power, bud"
+
+[node name="TransitionRect" parent="." instance=ExtResource( 22 )]
+margin_right = 480.0
+margin_bottom = 270.0

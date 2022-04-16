@@ -8,7 +8,7 @@
 [ext_resource path="res://textures/button_pressed.png" type="Texture" id=6]
 [ext_resource path="res://scenes/PartButton.cs" type="Script" id=7]
 
-[sub_resource type="StyleBoxTexture" id=2]
+[sub_resource type="StyleBoxTexture" id=6]
 texture = ExtResource( 5 )
 region_rect = Rect2( 0, 0, 7, 9 )
 margin_top = 1.0
@@ -20,13 +20,13 @@ region_rect = Rect2( 0, 0, 7, 9 )
 margin_top = 3.0
 margin_bottom = 1.0
 
-[sub_resource type="StyleBoxTexture" id=1]
+[sub_resource type="StyleBoxTexture" id=7]
 texture = ExtResource( 3 )
 region_rect = Rect2( 0, 0, 7, 9 )
 margin_top = 1.0
 margin_bottom = 3.0
 
-[sub_resource type="StyleBoxTexture" id=3]
+[sub_resource type="StyleBoxTexture" id=8]
 texture = ExtResource( 4 )
 region_rect = Rect2( 0, 0, 7, 9 )
 margin_top = 1.0
@@ -34,16 +34,18 @@ margin_bottom = 3.0
 
 [node name="PartButton" type="Button"]
 margin_right = 42.0
-margin_bottom = 42.0
-rect_min_size = Vector2( 42, 42 )
+margin_bottom = 38.0
+rect_min_size = Vector2( 42, 38 )
 rect_clip_content = true
+focus_mode = 0
 mouse_default_cursor_shape = 2
-custom_styles/hover = SubResource( 2 )
+custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 1 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 1 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 8 )
+custom_styles/normal = SubResource( 7 )
 shortcut_in_tooltip = false
+enabled_focus_mode = 0
 script = ExtResource( 7 )
 
 [node name="MarginContainer1" type="MarginContainer" parent="."]
@@ -54,9 +56,9 @@ mouse_filter = 2
 
 [node name="PartIcon" type="TextureRect" parent="MarginContainer1"]
 margin_left = 5.0
-margin_top = 5.0
+margin_top = 3.0
 margin_right = 37.0
-margin_bottom = 37.0
+margin_bottom = 35.0
 rect_min_size = Vector2( 32, 32 )
 rect_clip_content = true
 mouse_filter = 2
@@ -72,12 +74,12 @@ mouse_filter = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/margin_right = 1
-custom_constants/margin_bottom = 0
+custom_constants/margin_bottom = 4
 
 [node name="CountLabel" type="Label" parent="MarginContainer"]
-margin_top = 30.0
+margin_top = 26.0
 margin_right = 41.0
-margin_bottom = 42.0
+margin_bottom = 38.0
 grow_vertical = 0
 size_flags_vertical = 8
 custom_colors/font_color = Color( 1, 1, 1, 1 )
