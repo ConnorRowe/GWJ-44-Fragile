@@ -10,6 +10,7 @@ shader_param/percent = 1.0
 shader_param/bg_colour = Color( 0.105882, 0.121569, 0.129412, 1 )
 
 [node name="TransitionRect" type="TextureRect"]
+visible = false
 material = SubResource( 2 )
 anchor_right = 1.0
 anchor_bottom = 1.0

@@ -29,6 +29,8 @@ namespace Fragile
         private float forceNeededToBreak = 16f;
         private float jumpStrength = 128f;
 
+        public Camera2D Camera2D { get; set; }
+
         private Tween tween;
         private EngineSoundPlayer engineSoundPlayer;
 
@@ -171,6 +173,12 @@ namespace Fragile
             float windSpeedScale = Mathf.Clamp(LinearVelocity.LengthSquared() * 0.000005f, 0, 1);
             GlobalNodes.WindPlayer.VolumeDb = GD.Linear2Db(windSpeedScale);
             GlobalNodes.WindPitchShift.PitchScale = .8f + (windSpeedScale * .4f);
+
+            // Remove vehicle rotation for camera
+            if (Camera2D != null)
+            {
+                Camera2D.GlobalPosition = Position + new Vector2(128, 32);
+            }
         }
 
         public void BodyShapeEntered(RID bodyRID, Node body, int bodyShapeIndex, uint localShapeIndex)
@@ -398,6 +406,11 @@ namespace Fragile
                             {
                                 Construction.SetGridPart(partPoint + extraOffset + Construction.RootPartPos, null);
                             }
+                        }
+
+                        if (Wheels.Count == 0)
+                        {
+                            SelfDestruct();
                         }
                     }
                     else

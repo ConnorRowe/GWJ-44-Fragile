@@ -16,7 +16,7 @@ range_max_hz = 758.352
 rate_hz = 0.1
 
 [resource]
-bus/0/volume_db = -2.70802
+bus/0/volume_db = -14.6228
 bus/1/name = "Music"
 bus/1/solo = false
 bus/1/mute = false
@@ -33,7 +33,7 @@ bus/3/name = "Wind"
 bus/3/solo = false
 bus/3/mute = false
 bus/3/bypass_fx = false
-bus/3/volume_db = 2.44924
+bus/3/volume_db = 4.83123
 bus/3/send = "SFX"
 bus/3/effect/0/effect = SubResource( 4 )
 bus/3/effect/0/enabled = true
@@ -43,7 +43,7 @@ bus/4/name = "Engine"
 bus/4/solo = false
 bus/4/mute = false
 bus/4/bypass_fx = false
-bus/4/volume_db = 2.44924
+bus/4/volume_db = 3.83799
 bus/4/send = "SFX"
 bus/4/effect/0/effect = SubResource( 5 )
 bus/4/effect/0/enabled = true

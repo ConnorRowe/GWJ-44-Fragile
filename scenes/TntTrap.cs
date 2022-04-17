@@ -65,6 +65,11 @@ namespace Fragile
                 {
                     if (hit["collider"] is RigidBody2D rigidBody2D)
                     {
+                        if (rigidBody2D is TntTrap tntTrap)
+                        {
+                            tntTrap.Explode();
+                        }
+
                         if (rigidBody2D is Vehicle v)
                         {
                             if (vehicle == null)
@@ -106,13 +111,7 @@ namespace Fragile
             }
             else
             {
-                // BOOM
-                timer.Stop();
-                explodeTrace = true;
-
-                GlobalNodes.INSTANCE.MakeTntExplosion(Position, GetParent());
-                GetNode<CollisionShape2D>("CollisionShape2D").Disabled = true;
-                animSprite.Visible = false;
+                Explode();
             }
         }
 
@@ -131,6 +130,19 @@ namespace Fragile
                 Timeout();
                 timer.Start();
             }
+        }
+
+        private void Explode()
+        {
+            // BOOM
+            timer.Stop();
+            explodeTrace = true;
+
+            GlobalNodes.INSTANCE.MakeTntExplosion(Position, GetParent());
+            GetNode<CollisionShape2D>("CollisionShape2D").Disabled = true;
+            animSprite.Visible = false;
+
+            count = 5;
         }
     }
 }

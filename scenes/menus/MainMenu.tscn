@@ -1,0 +1,188 @@
+[gd_scene load_steps=18 format=2]
+
+[ext_resource path="res://scenes/menus/BaseMenu.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Theme.theme" type="Theme" id=2]
+[ext_resource path="res://textures/sfx_icon.png" type="Texture" id=3]
+[ext_resource path="res://textures/music_icon.png" type="Texture" id=4]
+[ext_resource path="res://fonts/Normal.tres" type="DynamicFont" id=5]
+[ext_resource path="res://textures/check_off.png" type="Texture" id=6]
+[ext_resource path="res://textures/check_on.png" type="Texture" id=7]
+[ext_resource path="res://fonts/NormalOutlined.tres" type="DynamicFont" id=8]
+[ext_resource path="res://textures/checker_bg.png" type="Texture" id=9]
+[ext_resource path="res://scenes/menus/MainMenu.cs" type="Script" id=10]
+[ext_resource path="res://textures/logo_screw_only.png" type="Texture" id=11]
+[ext_resource path="res://textures/nuts_n_bolts.png" type="Texture" id=12]
+[ext_resource path="res://textures/logo_no_screw.png" type="Texture" id=13]
+
+[sub_resource type="CanvasItemMaterial" id=3]
+particles_animation = true
+particles_anim_h_frames = 10
+particles_anim_v_frames = 1
+particles_anim_loop = false
+
+[sub_resource type="Gradient" id=4]
+offsets = PoolRealArray( 0, 0.944099, 1 )
+colors = PoolColorArray( 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 )
+
+[sub_resource type="GradientTexture" id=5]
+gradient = SubResource( 4 )
+
+[sub_resource type="ParticlesMaterial" id=6]
+lifetime_randomness = 0.09
+emission_shape = 2
+emission_box_extents = Vector3( 76, 42, 1 )
+flag_align_y = true
+flag_disable_z = true
+direction = Vector3( 0, -1, 0 )
+spread = 88.23
+gravity = Vector3( 0, 196, 0 )
+initial_velocity = 147.06
+initial_velocity_random = 0.74
+angular_velocity = 20.0
+angular_velocity_random = 1.0
+orbit_velocity = 0.0
+orbit_velocity_random = 0.0
+damping = 24.51
+damping_random = 1.0
+color_ramp = SubResource( 5 )
+anim_offset = 1.0
+anim_offset_random = 1.0
+
+[node name="MainMenu" instance=ExtResource( 1 )]
+script = ExtResource( 10 )
+nextScenePath = "res://scenes/Construction.tscn"
+
+[node name="BG" type="TextureRect" parent="." index="0"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource( 9 )
+stretch_mode = 2
+
+[node name="NextSceneButton" parent="Main" index="0"]
+text = "Play"
+
+[node name="Particles2D" type="Particles2D" parent="." index="2"]
+material = SubResource( 3 )
+position = Vector2( 239, 70 )
+amount = 48
+lifetime = 2.0
+local_coords = false
+process_material = SubResource( 6 )
+texture = ExtResource( 12 )
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="Screw" type="TextureRect" parent="." index="3"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -76.0
+margin_top = -76.0
+margin_right = 76.0
+margin_bottom = 8.0
+rect_pivot_offset = Vector2( 76, 42 )
+texture = ExtResource( 11 )
+
+[node name="Logo" type="TextureRect" parent="." index="4"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -76.0
+margin_top = -76.0
+margin_right = 76.0
+margin_bottom = 8.0
+rect_pivot_offset = Vector2( 76, 42 )
+texture = ExtResource( 13 )
+
+[node name="MasterVolSlider" type="HSlider" parent="." index="5"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+margin_left = -50.0
+margin_top = -68.0
+margin_right = 50.0
+margin_bottom = -52.0
+focus_mode = 0
+mouse_default_cursor_shape = 10
+theme = ExtResource( 2 )
+max_value = 1.0
+step = 0.001
+
+[node name="MusicVolSlider" type="HSlider" parent="." index="6"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+margin_left = -50.0
+margin_top = -53.0
+margin_right = 50.0
+margin_bottom = -37.0
+focus_mode = 0
+mouse_default_cursor_shape = 10
+theme = ExtResource( 2 )
+custom_icons/grabber_highlight = ExtResource( 4 )
+custom_icons/grabber = ExtResource( 4 )
+max_value = 1.0
+step = 0.001
+
+[node name="SFXVolSlider" type="HSlider" parent="." index="7"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+margin_left = -50.0
+margin_top = -37.0
+margin_right = 50.0
+margin_bottom = -21.0
+focus_mode = 0
+mouse_default_cursor_shape = 10
+theme = ExtResource( 2 )
+custom_icons/grabber_highlight = ExtResource( 3 )
+custom_icons/grabber = ExtResource( 3 )
+max_value = 1.0
+step = 0.001
+
+[node name="FullScreenCheck" type="CheckButton" parent="." index="8"]
+margin_left = 191.0
+margin_top = 246.0
+margin_right = 292.0
+margin_bottom = 270.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+custom_fonts/font = ExtResource( 5 )
+custom_icons/off = ExtResource( 6 )
+custom_icons/on = ExtResource( 7 )
+enabled_focus_mode = 0
+text = "Fullscreen"
+
+[node name="PersonalBestLabel" type="Label" parent="." index="9"]
+anchor_left = 1.0
+anchor_right = 1.0
+margin_left = -158.0
+margin_top = 5.0
+margin_right = -4.0
+margin_bottom = 19.0
+custom_colors/font_color = Color( 0.882353, 0.882353, 0.882353, 1 )
+custom_colors/font_outline_modulate = Color( 0.105882, 0.121569, 0.129412, 1 )
+custom_fonts/font = ExtResource( 8 )
+text = "Personal best: 100m"
+align = 2
+
+[node name="Credit" type="Label" parent="." index="10"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = -155.0
+margin_top = -27.0
+margin_right = -1.0
+custom_colors/font_color = Color( 0.882353, 0.882353, 0.882353, 1 )
+custom_colors/font_outline_modulate = Color( 0.105882, 0.121569, 0.129412, 1 )
+custom_fonts/font = ExtResource( 8 )
+text = "Made by Connor Magson
+for GWJ 44"
+align = 2

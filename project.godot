@@ -10,14 +10,16 @@ config_version=4
 
 [application]
 
-config/name="GWJ-44-Fragile"
-run/main_scene="res://scenes/Construction.tscn"
+config/name="LooseScrew"
+run/main_scene="res://scenes/menus/Intro.tscn"
+boot_splash/image="res://textures/splash_screen.png"
+boot_splash/use_filter=false
 config/icon="res://icon.png"
+config/windows_native_icon="res://win_icon.ico"
 
 [audio]
 
 driver=""
-output_latency=25
 
 [autoload]
 

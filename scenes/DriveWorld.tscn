@@ -235,8 +235,8 @@ custom_fonts/normal_font = ExtResource( 1 )
 bbcode_enabled = true
 bbcode_text = "[center][rainbow freq=0.2 sat=10 val=20][wave amp=50 freq=2]
 New personal best![/wave][/rainbow][/center]"
-text = "[center][rainbow freq=0.2 sat=10 val=20][wave amp=50 freq=2]
-New personal best![/wave][/rainbow][/center]"
+text = "
+New personal best!"
 scroll_active = false
 
 [node name="RichTextLabel2" type="RichTextLabel" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer"]
@@ -313,5 +313,6 @@ enabled_focus_mode = 0
 text = "Quit :("
 
 [node name="TransitionRect" parent="EndOfRunUI" instance=ExtResource( 17 )]
+visible = false
 
 [node name="Tween" type="Tween" parent="."]

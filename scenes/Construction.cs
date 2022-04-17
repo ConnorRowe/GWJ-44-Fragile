@@ -96,8 +96,8 @@ namespace Fragile
         private Dictionary<MainPart, int> inventory = new Dictionary<MainPart, int>()
         {
             { Parts.Parts.Body, 10 },
-            { Parts.Parts.WheelStandard, 2 },
-            { Parts.Parts.EngineSmall, 2 },
+            { Parts.Parts.WheelStandard, 3 },
+            { Parts.Parts.EngineSmall, 3 },
             { Parts.Parts.EngineLarge, 0 },
             { Parts.Parts.WheelSpring, 0 },
             { Parts.Parts.WheelJumbo, 0}
@@ -109,7 +109,16 @@ namespace Fragile
             { 100, new (MainPart part, int count)[] {(Parts.Parts.EngineLarge, 1), (Parts.Parts.WheelStandard, 2)} },
             { 200, new (MainPart part, int count)[] {(Parts.Parts.EngineLarge, 2), (Parts.Parts.Body, 16), (Parts.Parts.WheelJumbo, 2)} },
             { 500, new (MainPart part, int count)[] {(Parts.Parts.WheelSpring, 2), (Parts.Parts.WheelJumbo, 2)} },
-            { 1000, new (MainPart part, int count)[] {(Parts.Parts.Body, 65), (Parts.Parts.EngineLarge, 96), (Parts.Parts.EngineSmall, 95), (Parts.Parts.WheelSpring, 97), (Parts.Parts.WheelStandard, 95), (Parts.Parts.WheelJumbo, 95)} },
+            { 1000, new (MainPart part, int count)[] {(Parts.Parts.Body, 65), (Parts.Parts.EngineLarge, 96), (Parts.Parts.EngineSmall, 94), (Parts.Parts.WheelSpring, 97), (Parts.Parts.WheelStandard, 94), (Parts.Parts.WheelJumbo, 95)} },
+        };
+        private static Dictionary<MainPart, int> partButtonShortcuts = new Dictionary<MainPart, int>()
+        {
+            { Parts.Parts.Body, 1 },
+            { Parts.Parts.WheelStandard, 2 },
+            { Parts.Parts.EngineSmall, 3 },
+            { Parts.Parts.EngineLarge, 4 },
+            { Parts.Parts.WheelJumbo, 5},
+            { Parts.Parts.WheelSpring, 6 }
         };
 
         public override void _Ready()
@@ -163,8 +172,19 @@ namespace Fragile
 
             Update();
 
-            transitionRect.FadeIn();
+            transitionRect.FadeIn(1.5f);
             transitionRect.Connect(nameof(TransitionRect.Finished), this, nameof(TransitionFinished));
+
+            //Tutorial
+            if (SaveData.MaxDistance < 50)
+            {
+                GetNode<AcceptDialog>("TutorialIntro").Popup_(new Rect2(117, 94, 330, 82));
+
+                GetNode("TutorialIntro").Connect("confirmed", GetNode("TutorialGrid"), "popup", new Godot.Collections.Array() { new Rect2(172, 12, 255, 88) });
+                GetNode("TutorialGrid").Connect("confirmed", GetNode("TutorialParts"), "popup", new Godot.Collections.Array() { new Rect2(103, 40, 247, 112) });
+                GetNode("TutorialParts").Connect("confirmed", GetNode("TutorialDials"), "popup", new Godot.Collections.Array() { new Rect2(96, 169, 190, 67) });
+                GetNode("TutorialDials").Connect("confirmed", GetNode("TutorialDrive"), "popup", new Godot.Collections.Array() { new Rect2(96, 133, 190, 97) });
+            }
         }
 
         public override void _Input(InputEvent evt)
@@ -488,17 +508,17 @@ namespace Fragile
                         {
                             vehicle.AddSprite(rootTex, pos);
 
-                            Camera2D camera2D = new Camera2D()
+                            vehicle.Camera2D = new Camera2D()
                             {
                                 SmoothingEnabled = true,
                                 Current = true,
                                 LimitLeft = 0,
                                 LimitBottom = 270,
-                                Position = (pos * 32).ToVector2() + new Vector2(128, 64),
+                                // Position = (pos * 32).ToVector2() + new Vector2(128, 64),
                                 ProcessMode = Camera2D.Camera2DProcessMode.Physics
                             };
 
-                            vehicle.AddChild(camera2D);
+                            vehicle.AddChild(vehicle.Camera2D);
                         }
                         else if (p is WheelPart wheelPart)
                         {
@@ -659,7 +679,7 @@ namespace Fragile
         {
             if (wheelCount > 0)
             {
-                transitionRect.FadeOut(2f);
+                transitionRect.FadeOut(new Color("52333f"), 2f);
             }
             else
             {
@@ -670,7 +690,7 @@ namespace Fragile
 
         private void ShowTooltip(MainPart part)
         {
-            partTooltip.UpdateFromPart(part);
+            partTooltip.UpdateFromPart(part, partButtonShortcuts[part]);
 
             partTooltip.Visible = true;
         }

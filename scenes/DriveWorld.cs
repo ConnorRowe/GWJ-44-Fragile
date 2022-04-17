@@ -25,6 +25,7 @@ namespace Fragile
         private bool isPersonalBest = false;
         private float startX = 0;
         private int[] milestones = new int[5] { 50, 100, 200, 500, 1000 };
+        private bool transitionQuit = false;
 
         public static Vector2 VehicleStartPos { get; } = new Vector2(280, 56);
 
@@ -44,26 +45,29 @@ namespace Fragile
             levelChunkB.GetNode<LevelPolygon>("LevelPolygon").UpdateTextureFromPos();
 
             transitionRect = GetNode<TransitionRect>("EndOfRunUI/TransitionRect");
-            transitionRect.FadeIn(1.5f);
+            transitionRect.FadeIn(new Color("52333f"), 3f);
 
 
             distLabel = GetNode<Label>("UI/DistanceLabel");
             fps = GetNode<Label>("UI/fps");
 
-            GetNode<Label>("UI/PersonalBestLabel").Text = $"PB: {SaveData.MaxDistance}";
+            GetNode<Label>("UI/PersonalBestLabel").Text = $"PB: {FormatDistance(SaveData.MaxDistance)}";
 
             tween = GetNode<Tween>("Tween");
             endOfRunPanel = GetNode<Panel>("EndOfRunUI/Panel");
 
-            GetNode("EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/RestartButton").Connect("pressed", transitionRect, nameof(TransitionRect.FadeOut), new Godot.Collections.Array() { 2f });
+            var restartButton = GetNode("EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/RestartButton");
+            restartButton.Connect("pressed", transitionRect, nameof(TransitionRect.FadeOut), new Godot.Collections.Array() { 2f });
             transitionRect.Connect(nameof(TransitionRect.Finished), this, nameof(TransitionFinished));
+            restartButton.Connect("mouse_entered", GlobalNodes.INSTANCE, nameof(GlobalNodes.UIClick));
+            var quitButton = GetNode("EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/QuitButton2");
+            quitButton.Connect("pressed", this, nameof(QuitPressed));
+            quitButton.Connect("mouse_entered", GlobalNodes.INSTANCE, nameof(GlobalNodes.UIClick));
         }
 
         public void SetVehicle(Vehicle vehicle)
         {
             this.vehicle = vehicle;
-
-            // vehicle.SetPositionWithWheels(VehicleStartPos);
 
             var selfDestructBtn = GetNode("UI/SelfDestruct");
             selfDestructBtn.Connect("pressed", vehicle, nameof(vehicle.SelfDestruct));
@@ -142,12 +146,7 @@ namespace Fragile
             tween.InterpolateProperty(endOfRunPanel, "modulate", Colors.Transparent, Colors.White, .5f, Tween.TransitionType.Cubic, Tween.EaseType.In);
             tween.Start();
 
-            string dist = "";
-            if (furthestDistance > 1000f)
-                dist = $"{(furthestDistance * 0.001f):0.00}km";
-            else
-                dist = $"{furthestDistance:0}m";
-
+            string dist = FormatDistance(furthestDistance);
 
             //New milestone?
             int prevMilestone = 0;
@@ -184,6 +183,13 @@ namespace Fragile
             Construction.ClearGrid();
         }
 
+        private void QuitPressed()
+        {
+            transitionQuit = true;
+
+            transitionRect.FadeOut(new Color("1b1f21"), 1f);
+        }
+
         private void Restart()
         {
             GetTree().ChangeScene("res://scenes/Construction.tscn");
@@ -193,15 +199,31 @@ namespace Fragile
 
         private void Quit()
         {
+            GetTree().ChangeScene("res://scenes/menus/MainMenu.tscn");
 
+            QueueFree();
         }
 
         private void TransitionFinished(bool fadeIn)
         {
             if (!fadeIn)
             {
-                Restart();
+                if (transitionQuit)
+                    Quit();
+                else
+                    Restart();
             }
+        }
+
+        public static string FormatDistance(float distance)
+        {
+            string dist = "";
+            if (distance > 1000f)
+                dist = $"{(distance * 0.001f):0.00}km";
+            else
+                dist = $"{distance:0}m";
+
+            return dist;
         }
     }
 }

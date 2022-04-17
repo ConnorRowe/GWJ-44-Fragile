@@ -1,4 +1,4 @@
-[gd_scene load_steps=52 format=2]
+[gd_scene load_steps=59 format=2]
 
 [ext_resource path="res://scenes/Construction.cs" type="Script" id=1]
 [ext_resource path="res://textures/grid_cell.png" type="Texture" id=2]
@@ -20,8 +20,11 @@
 [ext_resource path="res://textures/button_normal.png" type="Texture" id=18]
 [ext_resource path="res://textures/button_pressed.png" type="Texture" id=19]
 [ext_resource path="res://fonts/consfont.ttf" type="DynamicFontData" id=20]
-[ext_resource path="res://textures/blocked.png" type="Texture" id=21]
+[ext_resource path="res://Theme.theme" type="Theme" id=21]
 [ext_resource path="res://scenes/TransitionRect.tscn" type="PackedScene" id=22]
+[ext_resource path="res://textures/blocked.png" type="Texture" id=23]
+[ext_resource path="res://textures/sound_icon.png" type="Texture" id=24]
+[ext_resource path="res://textures/right_arrow.png" type="Texture" id=25]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 256, 11 )
@@ -119,26 +122,57 @@ font_data = ExtResource( 20 )
 [sub_resource type="StyleBoxTexture" id=22]
 texture = ExtResource( 16 )
 region_rect = Rect2( 0, 0, 7, 9 )
-margin_top = 1.0
-margin_bottom = 3.0
+margin_left = 6.0
+margin_right = 6.0
+margin_top = 5.0
+margin_bottom = 5.0
 
 [sub_resource type="StyleBoxTexture" id=23]
 texture = ExtResource( 18 )
 region_rect = Rect2( 0, 0, 7, 9 )
-margin_top = 1.0
-margin_bottom = 3.0
+margin_left = 6.0
+margin_right = 6.0
+margin_top = 5.0
+margin_bottom = 5.0
 
 [sub_resource type="StyleBoxTexture" id=24]
 texture = ExtResource( 17 )
 region_rect = Rect2( 0, 0, 7, 9 )
-margin_top = 1.0
-margin_bottom = 3.0
+margin_left = 6.0
+margin_right = 6.0
+margin_top = 5.0
+margin_bottom = 5.0
 
 [sub_resource type="StyleBoxTexture" id=25]
 texture = ExtResource( 19 )
 region_rect = Rect2( 0, 0, 7, 9 )
 margin_top = 3.0
 margin_bottom = 1.0
+
+[sub_resource type="StyleBoxEmpty" id=32]
+
+[sub_resource type="StyleBoxEmpty" id=33]
+
+[sub_resource type="StyleBoxFlat" id=34]
+bg_color = Color( 0.105882, 0.121569, 0.129412, 1 )
+border_color = Color( 0.156863, 0.207843, 0.25098, 1 )
+expand_margin_left = 2.0
+expand_margin_right = 2.0
+expand_margin_top = 1.0
+expand_margin_bottom = 1.0
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=35]
+bg_color = Color( 0.87451, 0.878431, 0.909804, 1 )
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color( 0.172549, 0.207843, 0.301961, 1 )
+expand_margin_left = 4.0
+expand_margin_right = 4.0
+expand_margin_top = 2.0
+expand_margin_bottom = 2.0
 
 [sub_resource type="StyleBoxFlat" id=26]
 bg_color = Color( 0.239216, 0.160784, 0.211765, 1 )
@@ -150,23 +184,31 @@ border_color = Color( 0.160784, 0.113725, 0.168627, 1 )
 shadow_color = Color( 0.160784, 0.113725, 0.168627, 0.784314 )
 shadow_size = 2587
 
-[sub_resource type="Theme" id=21]
+[sub_resource type="Theme" id=36]
 Button/fonts/font = SubResource( 27 )
 Button/styles/disabled = SubResource( 22 )
 Button/styles/focus = SubResource( 23 )
 Button/styles/hover = SubResource( 24 )
 Button/styles/normal = SubResource( 23 )
 Button/styles/pressed = SubResource( 25 )
+HSlider/icons/grabber = ExtResource( 24 )
+HSlider/icons/grabber_highlight = ExtResource( 24 )
+HSlider/styles/grabber_area = SubResource( 32 )
+HSlider/styles/grabber_area_highlight = SubResource( 33 )
+HSlider/styles/slider = SubResource( 34 )
 Label/fonts/font = ExtResource( 6 )
 LineEdit/fonts/font = ExtResource( 6 )
 TextEdit/fonts/font = ExtResource( 6 )
+TooltipLabel/colors/font_color_shadow = Color( 0, 0, 0, 0 )
+TooltipLabel/fonts/font = ExtResource( 6 )
+TooltipPanel/styles/panel = SubResource( 35 )
 WindowDialog/colors/title_color = Color( 0, 0, 0, 0 )
 WindowDialog/constants/close_h_ofs = 37
 WindowDialog/constants/close_v_ofs = -5
 WindowDialog/constants/title_height = 0
 WindowDialog/fonts/title_font = ExtResource( 6 )
-WindowDialog/icons/close = ExtResource( 21 )
-WindowDialog/icons/close_highlight = ExtResource( 21 )
+WindowDialog/icons/close = ExtResource( 23 )
+WindowDialog/icons/close_highlight = ExtResource( 23 )
 WindowDialog/styles/panel = SubResource( 26 )
 
 [node name="Construction" type="Node2D"]
@@ -360,11 +402,6 @@ custom_colors/font_outline_modulate = Color( 0.470588, 0.113725, 0.309804, 1 )
 custom_fonts/font = ExtResource( 15 )
 text = "NEEDS MORE POWER"
 
-[node name="PartTooltip" parent="." instance=ExtResource( 9 )]
-visible = false
-margin_right = 190.0
-margin_bottom = 90.0
-
 [node name="DriveButton" type="Button" parent="."]
 margin_left = 5.0
 margin_top = 233.0
@@ -375,6 +412,7 @@ rect_clip_content = true
 focus_mode = 0
 mouse_default_cursor_shape = 2
 size_flags_horizontal = 3
+theme = ExtResource( 21 )
 custom_colors/font_color = Color( 1, 0.933333, 0.513726, 1 )
 custom_fonts/font = SubResource( 15 )
 custom_styles/hover = SubResource( 16 )
@@ -382,10 +420,14 @@ custom_styles/pressed = SubResource( 17 )
 custom_styles/focus = SubResource( 18 )
 custom_styles/disabled = SubResource( 19 )
 custom_styles/normal = SubResource( 18 )
-shortcut_in_tooltip = false
 enabled_focus_mode = 0
 shortcut = SubResource( 29 )
 text = "Drive! >>"
+
+[node name="PartTooltip" parent="." instance=ExtResource( 9 )]
+visible = false
+margin_right = 190.0
+margin_bottom = 110.0
 
 [node name="AcceptDialog" type="AcceptDialog" parent="."]
 margin_left = 106.0
@@ -394,11 +436,104 @@ margin_right = 382.0
 margin_bottom = 136.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme = SubResource( 21 )
+theme = SubResource( 36 )
 popup_exclusive = true
 window_title = ""
 dialog_text = "make sure ya got wheels and power, bud"
 
+[node name="TutorialIntro" type="AcceptDialog" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = 117.0
+margin_top = 94.0
+margin_right = 447.0
+margin_bottom = 158.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource( 21 )
+popup_exclusive = true
+window_title = "Tutorial"
+dialog_text = "Welcome to the construction interface!
+
+Let's show you around."
+
+[node name="TutorialGrid" type="AcceptDialog" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = 172.0
+margin_top = 12.0
+margin_right = 397.0
+margin_bottom = 83.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource( 21 )
+popup_exclusive = true
+window_title = "Tutorial"
+dialog_text = "This is the grid. You can place parts here with the left mouse button, and remove them with the right mouse button."
+dialog_autowrap = true
+
+[node name="TutorialParts" type="AcceptDialog" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = 103.0
+margin_top = 40.0
+margin_right = 350.0
+margin_bottom = 152.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource( 21 )
+popup_exclusive = true
+window_title = "Tutorial"
+dialog_text = "<<  Select different parts using the buttons here.  (or press their shortcut keys)
+
+You can unlock more parts by driving past certain distance milestones."
+dialog_autowrap = true
+
+[node name="TutorialDials" type="AcceptDialog" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = 96.0
+margin_top = 169.0
+margin_right = 286.0
+margin_bottom = 236.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource( 21 )
+popup_exclusive = true
+window_title = "Tutorial"
+dialog_text = "<< These dials show the power and weight of your vehicle."
+dialog_autowrap = true
+
+[node name="TutorialDrive" type="AcceptDialog" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = 96.0
+margin_top = 133.0
+margin_right = 286.0
+margin_bottom = 230.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource( 21 )
+popup_exclusive = true
+window_title = "Tutorial"
+dialog_text = "This button will contruct your vehicle and take you to the driving track. You can also press the 'enter' key."
+dialog_autowrap = true
+
+[node name="Sprite" type="Sprite" parent="TutorialDrive"]
+position = Vector2( 22, 116 )
+texture = ExtResource( 25 )
+
 [node name="TransitionRect" parent="." instance=ExtResource( 22 )]
+visible = false
 margin_right = 480.0
 margin_bottom = 270.0
