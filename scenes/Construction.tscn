@@ -526,7 +526,7 @@ size_flags_vertical = 3
 theme = ExtResource( 21 )
 popup_exclusive = true
 window_title = "Tutorial"
-dialog_text = "This button will contruct your vehicle and take you to the driving track. You can also press the 'enter' key."
+dialog_text = "This button will construct your vehicle and take you to the driving track. You can also press the 'enter' key."
 dialog_autowrap = true
 
 [node name="Sprite" type="Sprite" parent="TutorialDrive"]
