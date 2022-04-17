@@ -14,7 +14,7 @@ namespace Fragile
 
             transitionRect = GetNode<TransitionRect>("TransitionRect");
             transitionRect.Connect(nameof(TransitionRect.Finished), this, nameof(TransitionFinished));
-            transitionRect.FadeIn(1f);
+            transitionRect.FadeIn(2f);
 
             var nextSceneButton = GetNode("Main/NextSceneButton");
             nextSceneButton.Connect("pressed", transitionRect, nameof(TransitionRect.FadeOut), new Godot.Collections.Array() { 2f });

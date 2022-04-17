@@ -39,5 +39,15 @@ custom_colors/font_outline_modulate = Color( 0.156863, 0.207843, 0.25098, 1 )
 custom_fonts/font = ExtResource( 2 )
 text = "Hold A / D to tilt left / right."
 
-[node name="RootPos" type="Position2D" parent="." index="7"]
+[node name="Label4" type="Label" parent="." index="7"]
+margin_left = 794.0
+margin_top = 19.0
+margin_right = 994.0
+margin_bottom = 46.0
+custom_colors/font_outline_modulate = Color( 0.156863, 0.207843, 0.25098, 1 )
+custom_fonts/font = ExtResource( 2 )
+text = "The self destruct button's on the right 
+if you need it..."
+
+[node name="RootPos" type="Position2D" parent="." index="8"]
 position = Vector2( 280, 56 )

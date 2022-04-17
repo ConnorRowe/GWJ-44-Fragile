@@ -16,8 +16,11 @@ namespace Fragile
         private static AudioStreamPlayer smashPlayer;
         private static AudioStreamPlayer wheelBumpPlayer;
         private static AudioStreamPlayer explosionPlayer;
+        private static AudioStreamPlayer musicPlayer;
         private static PackedScene tntExplosionScene = GD.Load<PackedScene>("res://scenes/TntExplosion.tscn");
         private static AudioStreamSample explosionSample = GD.Load<AudioStreamSample>("res://audio/explosion.wav");
+        private static AudioStreamOGGVorbis mainTheme = GD.Load<AudioStreamOGGVorbis>("res://audio/theme_mix.ogg");
+        private static AudioStreamOGGVorbis constructionTheme = GD.Load<AudioStreamOGGVorbis>("res://audio/construction_mix.ogg");
 
         static GlobalNodes()
         {
@@ -67,6 +70,7 @@ namespace Fragile
             WindPlayer = GetNode<AudioStreamPlayer>("WindPlayer");
             explosionPlayer = GetNode<AudioStreamPlayer>("ExplosionPlayer");
             WindPitchShift = (AudioEffectPitchShift)AudioServer.GetBusEffect(AudioServer.GetBusIndex("Wind"), 1);
+            musicPlayer = GetNode<AudioStreamPlayer>("MusicPlayer");
 
             GD.Print($"Loaded max_distance as [{SaveData.MaxDistance}]");
         }
@@ -132,6 +136,24 @@ namespace Fragile
         public static void Explosion()
         {
             explosionPlayer.Play();
+        }
+
+        public static void MainTheme()
+        {
+            if (musicPlayer.Stream != mainTheme)
+            {
+                musicPlayer.Stream = mainTheme;
+                musicPlayer.Play();
+            }
+        }
+
+        public static void ConstructionTheme()
+        {
+            if (musicPlayer.Stream != constructionTheme)
+            {
+                musicPlayer.Stream = constructionTheme;
+                musicPlayer.Play();
+            }
         }
     }
 }

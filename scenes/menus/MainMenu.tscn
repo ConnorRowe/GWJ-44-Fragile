@@ -59,6 +59,8 @@ texture = ExtResource( 9 )
 stretch_mode = 2
 
 [node name="NextSceneButton" parent="Main" index="0"]
+margin_top = 147.0
+margin_bottom = 170.0
 text = "Play"
 
 [node name="Particles2D" type="Particles2D" parent="." index="2"]

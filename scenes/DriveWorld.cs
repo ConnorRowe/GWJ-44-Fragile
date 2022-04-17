@@ -63,6 +63,8 @@ namespace Fragile
             var quitButton = GetNode("EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/QuitButton2");
             quitButton.Connect("pressed", this, nameof(QuitPressed));
             quitButton.Connect("mouse_entered", GlobalNodes.INSTANCE, nameof(GlobalNodes.UIClick));
+
+            GlobalNodes.MainTheme();
         }
 
         public void SetVehicle(Vehicle vehicle)

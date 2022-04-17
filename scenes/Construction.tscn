@@ -534,6 +534,5 @@ position = Vector2( 22, 116 )
 texture = ExtResource( 25 )
 
 [node name="TransitionRect" parent="." instance=ExtResource( 22 )]
-visible = false
 margin_right = 480.0
 margin_bottom = 270.0

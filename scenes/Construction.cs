@@ -185,6 +185,8 @@ namespace Fragile
                 GetNode("TutorialParts").Connect("confirmed", GetNode("TutorialDials"), "popup", new Godot.Collections.Array() { new Rect2(96, 169, 190, 67) });
                 GetNode("TutorialDials").Connect("confirmed", GetNode("TutorialDrive"), "popup", new Godot.Collections.Array() { new Rect2(96, 133, 190, 97) });
             }
+
+            GlobalNodes.ConstructionTheme();
         }
 
         public override void _Input(InputEvent evt)

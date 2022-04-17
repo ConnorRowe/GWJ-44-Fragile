@@ -313,6 +313,5 @@ enabled_focus_mode = 0
 text = "Quit :("
 
 [node name="TransitionRect" parent="EndOfRunUI" instance=ExtResource( 17 )]
-visible = false
 
 [node name="Tween" type="Tween" parent="."]
