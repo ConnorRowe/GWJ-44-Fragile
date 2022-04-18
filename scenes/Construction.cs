@@ -679,7 +679,7 @@ namespace Fragile
 
         private void SwitchToDriveWorld()
         {
-            if (wheelCount > 0)
+            if (wheelCount > 0 && power > 0)
             {
                 transitionRect.FadeOut(new Color("52333f"), 2f);
             }
