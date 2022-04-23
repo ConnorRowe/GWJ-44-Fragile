@@ -436,14 +436,17 @@ namespace Fragile
                         {
                             var extraPoint = partPoint + extraOffset;
 
-                            var extraCollider = pointColliders[extraPoint];
+                            if (pointColliders.ContainsKey(extraPoint))
+                            {
+                                var extraCollider = pointColliders[extraPoint];
 
-                            RemoveChild(extraCollider);
-                            brokenPart.AddChild(extraCollider);
-                            extraCollider.Position = new Vector2(16 + (extraOffset.x * 32), 16 + (extraOffset.y * 32));
+                                RemoveChild(extraCollider);
+                                brokenPart.AddChild(extraCollider);
+                                extraCollider.Position = new Vector2(16 + (extraOffset.x * 32), 16 + (extraOffset.y * 32));
 
-                            colliderPoints.Remove(extraCollider);
-                            pointColliders.Remove(extraPoint);
+                                colliderPoints.Remove(extraCollider);
+                                pointColliders.Remove(extraPoint);
+                            }
 
                             Construction.SetGridPart(extraPoint + Construction.RootPartPos, null);
                         }
