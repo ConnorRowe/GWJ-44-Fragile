@@ -8,15 +8,26 @@ namespace Fragile
         {
             base._Ready();
 
-            GetNode("AnimationPlayer").Connect("animation_finished", this, nameof(SwitchToMainMenu));
+            GetNode("AnimationPlayer").Connect("animation_finished", this, nameof(AnimFinished));
         }
 
-        private void SwitchToMainMenu(string animName)
+        public override void _Input(InputEvent evt)
+        {
+            if (evt is InputEventKey ek && ek.Pressed && ek.Scancode == (int)KeyList.Space)
+                SwitchToMainMenu();
+        }
+
+        private void SwitchToMainMenu()
+        {
+            GetTree().ChangeScene("res://scenes/menus/MainMenu.tscn");
+            QueueFree();
+        }
+
+        private void AnimFinished(string animName)
         {
             if (animName == "ThemeWildCards")
             {
-                GetTree().ChangeScene("res://scenes/menus/MainMenu.tscn");
-                QueueFree();
+                SwitchToMainMenu();
             }
         }
     }

@@ -5,11 +5,6 @@ namespace Fragile.Parts
 {
     public static class Parts
     {
-        private static readonly Point UP = new Point(0, -1);
-        private static readonly Point RIGHT = new Point(1, 0);
-        private static readonly Point DOWN = new Point(0, 1);
-        private static readonly Point LEFT = new Point(-1, 0);
-
         public static RootPart RootPart = new RootPart();
         public static MainPart Body = new MainPart(3, "Body", "Just connects other parts together.", GD.Load<Texture>("res://textures/body.png"), Vector2.Zero);
         public static EnginePart EngineSmall = new EnginePart
@@ -33,7 +28,7 @@ namespace Fragile.Parts
             1.5f,
             1.5f,
             new Vector2(-16, 8),
-            new Point[2] { LEFT, UP }
+            new Point[2] { Point.Left, Point.Up }
         );
         public static WheelPart WheelStandard = new WheelPart
         (
@@ -43,14 +38,6 @@ namespace Fragile.Parts
             GD.Load<Texture>("res://textures/axle_standard.png"),
             GD.Load<Texture>("res://textures/wheel_standard.png")
         );
-        public static WheelPart WheelSpring = new WheelPart
-        (
-            8,
-            "Spring Wheel",
-            "Like a standard wheel, but can launch you up a bit. [press spacebar]",
-            GD.Load<Texture>("res://textures/axle_spring.png"),
-            GD.Load<Texture>("res://textures/wheel_spring.png")
-        );
         public static JumboWheelPart WheelJumbo = new JumboWheelPart
         (
             12,
@@ -59,6 +46,7 @@ namespace Fragile.Parts
             GD.Load<Texture>("res://textures/axle_jumbo.png"),
             GD.Load<Texture>("res://textures/wheel_jumbo.png")
         );
+        public static PistonPart Piston = new PistonPart(6, "Piston", "Can launch you up with the power of hydraulics! [press spacebar to activate]");
     }
 
     public abstract class Part : Godot.Object
@@ -138,6 +126,16 @@ namespace Fragile.Parts
             MaxSpeed = maxSpeed;
             Acceleration = acceleration;
             SmokeOffset = smokeOffset;
+        }
+    }
+
+    public sealed class PistonPart : MainPart
+    {
+        public float Power { get; } = 400;
+
+        public PistonPart(int mass, string partName, string partDesc) : base(mass, partName, partDesc, GD.Load<Texture>("res://textures/piston_housing.png"), Vector2.Zero)
+        {
+            this.ExtraParts = new Point[1] { Point.Down };
         }
     }
 }

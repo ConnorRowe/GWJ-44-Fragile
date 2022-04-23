@@ -8,6 +8,11 @@ namespace Fragile
     {
         public struct Point
         {
+            public static Point Up { get; } = new Point(0, -1);
+            public static Point Right { get; } = new Point(1, 0);
+            public static Point Down { get; } = new Point(0, 1);
+            public static Point Left { get; } = new Point(-1, 0);
+
             public int x;
             public int y;
 
@@ -62,12 +67,19 @@ namespace Fragile
         private static Texture gridCursorRedTex = GD.Load<Texture>("res://textures/grid_cursor_red.png");
         private static Texture blockedTex = GD.Load<Texture>("res://textures/blocked.png");
         private static Texture disconnectedTex = GD.Load<Texture>("res://textures/disconnected.png");
+        private static PhysicsMaterial vehiclePhysMat = new PhysicsMaterial()
+        {
+            Friction = 0,
+            Rough = false,
+            Bounce = .7f
+        };
         public static Point[] FourDirs { get; } = new Point[4] { new Point(0, -1), new Point(1, 0), new Point(0, 1), new Point(-1, 0) };
 
         private static Part[,] partsGrid = new Part[GRID_WIDTH, GRID_HEIGHT];
         public static Point RootPartPos { get; } = new Point(6, 4);
         public static bool DrawGrid { get; set; } = true;
         public static Label Debug;
+        public static bool QuickRestart { get; set; } = false;
 
         private Node2D grid;
         private Point cursorGridPos = new Point(0, 0);
@@ -99,8 +111,8 @@ namespace Fragile
             { Parts.Parts.WheelStandard, 3 },
             { Parts.Parts.EngineSmall, 3 },
             { Parts.Parts.EngineLarge, 0 },
-            { Parts.Parts.WheelSpring, 0 },
-            { Parts.Parts.WheelJumbo, 0}
+            { Parts.Parts.WheelJumbo, 0},
+            { Parts.Parts.Piston, 0 },
         };
         private Dictionary<MainPart, PartButton> partButtons = new Dictionary<MainPart, PartButton>();
         public static Dictionary<int, (MainPart part, int count)[]> MileStoneParts { get; } = new Dictionary<int, (MainPart part, int count)[]>()
@@ -108,8 +120,8 @@ namespace Fragile
             { 50, new (MainPart part, int count)[] {(Parts.Parts.Body, 8), (Parts.Parts.EngineSmall, 2)} },
             { 100, new (MainPart part, int count)[] {(Parts.Parts.EngineLarge, 1), (Parts.Parts.WheelStandard, 2)} },
             { 200, new (MainPart part, int count)[] {(Parts.Parts.EngineLarge, 2), (Parts.Parts.Body, 16), (Parts.Parts.WheelJumbo, 2)} },
-            { 500, new (MainPart part, int count)[] {(Parts.Parts.WheelSpring, 2), (Parts.Parts.WheelJumbo, 2)} },
-            { 1000, new (MainPart part, int count)[] {(Parts.Parts.Body, 65), (Parts.Parts.EngineLarge, 96), (Parts.Parts.EngineSmall, 94), (Parts.Parts.WheelSpring, 97), (Parts.Parts.WheelStandard, 94), (Parts.Parts.WheelJumbo, 95)} },
+            { 500, new (MainPart part, int count)[] {(Parts.Parts.Piston, 2), (Parts.Parts.WheelJumbo, 2)} },
+            { 1000, new (MainPart part, int count)[] {(Parts.Parts.Body, 65), (Parts.Parts.EngineLarge, 96), (Parts.Parts.EngineSmall, 94), (Parts.Parts.Piston, 97), (Parts.Parts.WheelStandard, 94), (Parts.Parts.WheelJumbo, 95)} },
         };
         private static Dictionary<MainPart, int> partButtonShortcuts = new Dictionary<MainPart, int>()
         {
@@ -118,7 +130,7 @@ namespace Fragile
             { Parts.Parts.EngineSmall, 3 },
             { Parts.Parts.EngineLarge, 4 },
             { Parts.Parts.WheelJumbo, 5},
-            { Parts.Parts.WheelSpring, 6 }
+            { Parts.Parts.Piston, 6 }
         };
 
         public override void _Ready()
@@ -148,14 +160,14 @@ namespace Fragile
             partButtons.Add(Parts.Parts.WheelStandard, GetNode<PartButton>("Wheel"));
             partButtons.Add(Parts.Parts.EngineSmall, GetNode<PartButton>("SmallEngine"));
             partButtons.Add(Parts.Parts.EngineLarge, GetNode<PartButton>("LargeEngine"));
-            partButtons.Add(Parts.Parts.WheelSpring, GetNode<PartButton>("WheelSpring"));
+            partButtons.Add(Parts.Parts.Piston, GetNode<PartButton>("Piston"));
             partButtons.Add(Parts.Parts.WheelJumbo, GetNode<PartButton>("JumboWheel"));
 
             partButtons[Parts.Parts.Body].SetPart(Parts.Parts.Body);
             partButtons[Parts.Parts.WheelStandard].SetPart(Parts.Parts.WheelStandard);
             partButtons[Parts.Parts.EngineSmall].SetPart(Parts.Parts.EngineSmall);
             partButtons[Parts.Parts.EngineLarge].SetPart(Parts.Parts.EngineLarge);
-            partButtons[Parts.Parts.WheelSpring].SetPart(Parts.Parts.WheelSpring);
+            partButtons[Parts.Parts.Piston].SetPart(Parts.Parts.Piston);
             partButtons[Parts.Parts.WheelJumbo].SetPart(Parts.Parts.WheelJumbo);
 
             foreach (var part in partButtons.Keys)
@@ -176,7 +188,7 @@ namespace Fragile
             transitionRect.Connect(nameof(TransitionRect.Finished), this, nameof(TransitionFinished));
 
             //Tutorial
-            if (SaveData.MaxDistance < 50)
+            if (SaveData.MaxDistance < 25)
             {
                 GetNode<AcceptDialog>("TutorialIntro").Popup_(new Rect2(117, 94, 330, 82));
 
@@ -186,7 +198,14 @@ namespace Fragile
                 GetNode("TutorialDials").Connect("confirmed", GetNode("TutorialDrive"), "popup", new Godot.Collections.Array() { new Rect2(96, 133, 190, 97) });
             }
 
-            GlobalNodes.ConstructionTheme();
+            if (QuickRestart)
+            {
+                QuickRestart = false;
+
+                TransitionFinished(false);
+            }
+            else
+                GlobalNodes.ConstructionTheme();
         }
 
         public override void _Input(InputEvent evt)
@@ -487,7 +506,9 @@ namespace Fragile
             {
                 GravityScale = 0,
                 Layers = 0,
-                Position = DriveWorld.VehicleStartPos
+                Position = DriveWorld.VehicleStartPos,
+                PhysicsMaterialOverride = vehiclePhysMat,
+                ContinuousCd = RigidBody2D.CCDMode.CastRay
             };
 
             parent.AddChild(vehicle);
@@ -516,7 +537,6 @@ namespace Fragile
                                 Current = true,
                                 LimitLeft = 0,
                                 LimitBottom = 270,
-                                // Position = (pos * 32).ToVector2() + new Vector2(128, 64),
                                 ProcessMode = Camera2D.Camera2DProcessMode.Physics
                             };
 
@@ -525,6 +545,10 @@ namespace Fragile
                         else if (p is WheelPart wheelPart)
                         {
                             vehicle.AddWheel(pos, wheelPart);
+                        }
+                        else if (p is PistonPart pistonPart)
+                        {
+                            vehicle.AddPiston(pos, pistonPart);
                         }
                         else if (p is MainPart mainPart)
                         {
@@ -537,7 +561,15 @@ namespace Fragile
                             vehicle.AddEngineSmoke(pos, enginePart.SmokeOffset);
                         }
 
-                        if (!(p is ExtraPart extraPart && partsGrid[extraPart.OwnerPart.x, extraPart.OwnerPart.y] is WheelPart))
+                        bool addCollider = true;
+
+                        if (p is ExtraPart extraPart)
+                        {
+                            Part ownerPart = partsGrid[extraPart.OwnerPart.x, extraPart.OwnerPart.y];
+                            addCollider = !(ownerPart is WheelPart || ownerPart is PistonPart);
+                        }
+
+                        if (addCollider)
                             vehicle.AddSquareCollider(pos);
                     }
                 }
@@ -742,6 +774,25 @@ namespace Fragile
                 GetTree().Root.AddChild(driveWorld);
                 QueueFree();
             }
+        }
+
+        public static void OverwriteGrid(Part[,] newPartsGrid)
+        {
+            partsGrid = newPartsGrid;
+        }
+
+        public static Part[,] ClonePartsGrid()
+        {
+            Part[,] copy = new Part[GRID_WIDTH, GRID_HEIGHT];
+            for (int x = 0; x < GRID_WIDTH; x++)
+            {
+                for (int y = 0; y < GRID_HEIGHT; y++)
+                {
+                    copy[x, y] = partsGrid[x, y];
+                }
+            }
+
+            return copy;
         }
     }
 }

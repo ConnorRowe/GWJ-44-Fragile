@@ -26,6 +26,7 @@ namespace Fragile
         private float startX = 0;
         private int[] milestones = new int[5] { 50, 100, 200, 500, 1000 };
         private bool transitionQuit = false;
+        private Parts.Part[,] partsGridCached;
 
         public static Vector2 VehicleStartPos { get; } = new Vector2(280, 56);
 
@@ -56,15 +57,22 @@ namespace Fragile
             tween = GetNode<Tween>("Tween");
             endOfRunPanel = GetNode<Panel>("EndOfRunUI/Panel");
 
-            var restartButton = GetNode("EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/RestartButton");
-            restartButton.Connect("pressed", transitionRect, nameof(TransitionRect.FadeOut), new Godot.Collections.Array() { 2f });
             transitionRect.Connect(nameof(TransitionRect.Finished), this, nameof(TransitionFinished));
-            restartButton.Connect("mouse_entered", GlobalNodes.INSTANCE, nameof(GlobalNodes.UIClick));
+
+            var quickRestartButton = GetNode("EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/QuickRestartButton");
+            quickRestartButton.Connect("pressed", this, nameof(QuickRestart));
+            quickRestartButton.Connect("mouse_entered", GlobalNodes.INSTANCE, nameof(GlobalNodes.UIClick));
+            var rebuildButton = GetNode("EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/Rebuild");
+            rebuildButton.Connect("pressed", this, nameof(Rebuild));
+            rebuildButton.Connect("mouse_entered", GlobalNodes.INSTANCE, nameof(GlobalNodes.UIClick));
+
             var quitButton = GetNode("EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer/QuitButton2");
             quitButton.Connect("pressed", this, nameof(QuitPressed));
             quitButton.Connect("mouse_entered", GlobalNodes.INSTANCE, nameof(GlobalNodes.UIClick));
 
             GlobalNodes.MainTheme();
+
+            partsGridCached = Construction.ClonePartsGrid();
         }
 
         public void SetVehicle(Vehicle vehicle)
@@ -181,15 +189,29 @@ namespace Fragile
                 GetNode<RichTextLabel>("EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/RichTextLabel").VisibleCharacters = 0;
             else
                 SaveData.SaveMaxDistance((int)furthestDistance);
-
-            Construction.ClearGrid();
         }
 
         private void QuitPressed()
         {
+            Construction.ClearGrid();
+
             transitionQuit = true;
 
             transitionRect.FadeOut(new Color("1b1f21"), 1f);
+        }
+
+        private void QuickRestart()
+        {
+            transitionRect.FadeOut(new Color("1b1f21"), .5f);
+            Construction.QuickRestart = true;
+            Construction.OverwriteGrid(partsGridCached);
+        }
+
+        private void Rebuild()
+        {
+            Construction.ClearGrid();
+
+            transitionRect.FadeOut(new Color("1b1f21"), 2f);
         }
 
         private void Restart()

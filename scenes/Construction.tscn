@@ -343,7 +343,7 @@ margin_right = 90.0
 margin_bottom = 109.0
 shortcut = SubResource( 9 )
 
-[node name="WheelSpring" parent="." instance=ExtResource( 5 )]
+[node name="Piston" parent="." instance=ExtResource( 5 )]
 margin_left = 48.0
 margin_top = 111.0
 margin_right = 90.0

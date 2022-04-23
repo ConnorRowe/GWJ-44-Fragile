@@ -14,6 +14,7 @@ namespace Fragile
         private static PhysicsMaterial wheelPhysMat = new PhysicsMaterial() { Bounce = .2f, Rough = true, Friction = 1f };
         private static PackedScene engineSmokeScene = GD.Load<PackedScene>("res://scenes/EngineSmoke.tscn");
         private static PackedScene nutsNBoltsScene = GD.Load<PackedScene>("res://scenes/NutsNBolts.tscn");
+        private static PackedScene pistonScene = GD.Load<PackedScene>("res://scenes/PistonPart.tscn");
 
         public List<RigidBody2D> Wheels = new List<RigidBody2D>();
         public List<PinJoint2D> PinJoints = new List<PinJoint2D>();
@@ -26,7 +27,7 @@ namespace Fragile
         private float accelerationScale = 0f;
         private float maxSpeedScale = 0f;
 
-        private float forceNeededToBreak = 16f;
+        private float forceNeededToBreak = 20f;
         private float jumpStrength = 128f;
 
         public Camera2D Camera2D { get; set; }
@@ -39,15 +40,15 @@ namespace Fragile
         private Dictionary<Point, Sprite> pointSprites = new Dictionary<Point, Sprite>();
         private Dictionary<Point, (RigidBody2D wheel, PinJoint2D pin, Sprite wheelSprite)> pointWheels = new Dictionary<Point, (RigidBody2D wheel, PinJoint2D pin, Sprite wheelSprite)>();
         private Dictionary<Point, Particles2D> pointEngineSmokes = new Dictionary<Point, Particles2D>();
-        private List<RigidBody2D> springWheels = new List<RigidBody2D>();
-        private List<CollisionShape2D> springs = new List<CollisionShape2D>();
-        private List<int> springShapeIdxs = new List<int>();
+        private Dictionary<Point, PistonPartBody> pointPistons = new Dictionary<Point, PistonPartBody>();
+        private List<PistonPartBody> pistons = new List<PistonPartBody>();
+        private List<int> pistonShapeIdxs = new List<int>();
 
         private float velocityLenDelta = 0f;
         private Vector2 lastFrameVelocity = Vector2.Zero;
         private int lastColliderHitIndex = -1;
         private bool showSmoke = false;
-        private bool canSpring = true;
+        private bool canJump = true;
         private bool isJumping = false;
 
         private float maxVelLenDel = 0;
@@ -71,9 +72,9 @@ namespace Fragile
         {
             base._Input(evt);
 
-            if (evt.IsActionPressed("g_jump") && canSpring)
+            if (evt.IsActionPressed("g_jump") && canJump)
             {
-                SpringJump();
+                ActivatePistons();
             }
         }
 
@@ -183,19 +184,23 @@ namespace Fragile
 
         public void BodyShapeEntered(RID bodyRID, Node body, int bodyShapeIndex, uint localShapeIndex)
         {
+            if (pistonShapeIdxs.Contains((int)localShapeIndex))
+                return;
+
             // Saves index of the last hit shape so it knows which part should break
-            if (!springShapeIdxs.Contains((int)localShapeIndex))
-                lastColliderHitIndex = (int)localShapeIndex;
+            lastColliderHitIndex = (int)localShapeIndex;
+
+            // GD.Print($"bodyShapeIndex={bodyShapeIndex}, localShapeIndex={localShapeIndex}");
 
             // GD.Print($"BodyShapeEntered({bodyRID.ToString()}, {body}, {bodyShapeIndex}, {localShapeIndex})");
         }
 
-        public void AddSprite(Texture texture, Point gridPos)
+        public Sprite AddSprite(Texture texture, Point gridPos)
         {
-            AddSprite(texture, gridPos, Vector2.Zero);
+            return AddSprite(texture, gridPos, Vector2.Zero);
         }
 
-        public void AddSprite(Texture texture, Point gridPos, Vector2 offset)
+        public Sprite AddSprite(Texture texture, Point gridPos, Vector2 offset)
         {
             Sprite sprite = new Sprite()
             {
@@ -208,6 +213,8 @@ namespace Fragile
             pointSprites.Add(gridPos, sprite);
 
             AddChild(sprite);
+
+            return sprite;
         }
 
         public void AddSquareCollider(Point gridPos)
@@ -280,23 +287,30 @@ namespace Fragile
             PinJoints.Add(pinJoint);
 
             pointWheels.Add(gridPos, (wheel, pinJoint, wheelSprite));
+        }
 
-            if (wheelPart == Parts.Parts.WheelSpring)
+        public void AddPiston(Point gridPoint, Parts.PistonPart pistonPart)
+        {
+            AddSprite(pistonPart.Texture, gridPoint);
+
+            PistonPartBody piston = pistonScene.Instance<PistonPartBody>();
+            AddChild(piston);
+            piston.Position = (gridPoint * 32).ToVector2() + new Vector2(16, 16);
+
+            CollisionShape2D collisionShape2D = new CollisionShape2D()
             {
-                springWheels.Add(wheel);
+                Position = new Vector2((gridPoint.x * 32) + cellShape.Extents.x, (gridPoint.y * 32) + cellShape.Extents.y),
+                Shape = cellShape,
+                Disabled = true,
+            };
 
+            AddChild(collisionShape2D);
+            piston.CollisionShape2D = collisionShape2D;
 
-                CollisionShape2D spring = new CollisionShape2D()
-                {
-                    Shape = springShape,
-                    Position = (gridPos * 32).ToVector2() + new Vector2(16, 32)
-                };
+            pointPistons.Add(gridPoint, piston);
+            pistons.Add(piston);
 
-                AddChild(spring);
-
-                springs.Add(spring);
-                springShapeIdxs.Add(spring.GetIndex());
-            }
+            pistonShapeIdxs.Add(collisionShape2D.GetIndex());
         }
 
         public void SetPositionWithWheels(Vector2 position)
@@ -375,6 +389,17 @@ namespace Fragile
                         }
                     }
 
+                    if (mainPart is PistonPart pistonPart)
+                    {
+                        var piston = pointPistons[partPoint];
+                        piston.CollisionShape2D.Disabled = true;
+                        pistons.Remove(piston);
+                        pointPistons.Remove(partPoint);
+
+                        piston.CollisionShape2D.QueueFree();
+                        piston.QueueFree();
+                    }
+
                     if (mainPart is WheelPart wheelPart)
                     {
                         var wheelNodes = pointWheels[partPoint];
@@ -386,14 +411,6 @@ namespace Fragile
                         pointWheels.Remove(partPoint);
 
                         Construction.SetGridPart(partPoint + new Point(0, 1) + Construction.RootPartPos, null);
-
-                        if (wheelPart == Parts.Parts.WheelSpring)
-                        {
-                            int idx = springWheels.IndexOf(wheelNodes.wheel);
-                            springWheels.RemoveAt(idx);
-                            springs[idx].QueueFree();
-                            springs.RemoveAt(idx);
-                        }
 
                         if (wheelPart is JumboWheelPart)
                         {
@@ -501,37 +518,12 @@ namespace Fragile
             GetTree().CreateTimer(p.Lifetime).Connect("timeout", p, "queue_free");
         }
 
-        private async void SpringJump()
+        private void ActivatePistons()
         {
-            if (springs.Count == 0)
-                return;
-
-            canSpring = false;
-            isJumping = true;
-
-            var springDir = Vector2.Down.Rotated(Rotation);
-
-            foreach (var spring in springs)
+            foreach (var piston in pistons)
             {
-                Vector2 springStartPos = spring.Position;
-                spring.Disabled = false;
-
-                tween.InterpolateProperty(spring, "position", springStartPos, springStartPos + (jumpStrength * springDir), .5f);
-                tween.InterpolateProperty(spring, "position", springStartPos + (jumpStrength * springDir), springStartPos, .2f, delay: .5f);
-                tween.InterpolateProperty(spring, "disabled", false, true, .01f, delay: .5f);
+                piston.GetNode<AnimationPlayer>("AnimationPlayer").Play("Plunge");
             }
-
-            tween.Start();
-
-            var timer = GetTree().CreateTimer(.7f);
-            await ToSignal(timer, "timeout");
-
-            isJumping = false;
-
-            timer = GetTree().CreateTimer(.2f);
-            await ToSignal(timer, "timeout");
-
-            canSpring = true;
         }
 
         public void SelfDestruct()

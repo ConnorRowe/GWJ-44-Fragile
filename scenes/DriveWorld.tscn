@@ -271,8 +271,8 @@ margin_left = 36.0
 margin_right = 300.0
 margin_bottom = 29.0
 
-[node name="RestartButton" type="Button" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer"]
-margin_right = 184.0
+[node name="QuickRestartButton" type="Button" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer"]
+margin_right = 122.0
 margin_bottom = 29.0
 rect_min_size = Vector2( 42, 20 )
 rect_clip_content = true
@@ -289,11 +289,32 @@ custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
 shortcut_in_tooltip = false
 enabled_focus_mode = 0
-text = "Restart!"
+text = "Quick Restart!"
+
+[node name="Rebuild" type="Button" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer"]
+margin_left = 126.0
+margin_right = 210.0
+margin_bottom = 29.0
+rect_min_size = Vector2( 42, 20 )
+rect_clip_content = true
+focus_mode = 0
+mouse_default_cursor_shape = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.68
+custom_colors/font_color = Color( 0.388235, 0.670588, 0.247059, 1 )
+custom_fonts/font = SubResource( 5 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 8 )
+custom_styles/normal = SubResource( 7 )
+shortcut_in_tooltip = false
+enabled_focus_mode = 0
+text = "New Build"
 
 [node name="QuitButton2" type="Button" parent="EndOfRunUI/Panel/MarginContainer/Panel/MarginContainer/VBoxContainer/MarginContainer/HBoxContainer"]
 modulate = Color( 1, 0.462745, 0.462745, 1 )
-margin_left = 188.0
+margin_left = 214.0
 margin_right = 264.0
 margin_bottom = 29.0
 rect_min_size = Vector2( 42, 20 )
