@@ -38,6 +38,8 @@ namespace Fragile
             GetNode<Label>("PersonalBestLabel").Text = $"Personal Best: {DriveWorld.FormatDistance(SaveData.MaxDistance)}";
 
             logo = GetNode<TextureRect>("Logo");
+
+            GetNode("Credit").Connect("meta_clicked", this, nameof(CreditMetaClicked));
         }
 
         private void VolSliderChanged(float linearVol, int busIdx)
@@ -62,6 +64,14 @@ namespace Fragile
             float a = Mathf.Cos(t);
 
             logo.RectRotation = 7.5f * a;
+        }
+
+        private void CreditMetaClicked(object meta)
+        {
+            if (meta is string str)
+            {
+                OS.ShellOpen(str);
+            }
         }
     }
 }

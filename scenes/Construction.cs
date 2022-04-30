@@ -58,6 +58,11 @@ namespace Fragile
             }
 
             public Vector2 ToVector2() => new Vector2(x, y);
+
+            public Point Rotated(float r)
+            {
+                return new Point(Mathf.RoundToInt((x * Mathf.Cos(r)) - (y * Mathf.Sin(r))), Mathf.RoundToInt((x * Mathf.Sin(r)) + (y * Mathf.Cos(r))));
+            }
         }
 
         private const int GRID_HEIGHT = 8;
@@ -65,8 +70,13 @@ namespace Fragile
         private static Texture rootTex = GD.Load<Texture>("res://textures/root.png");
         private static Texture gridCursorGreenTex = GD.Load<Texture>("res://textures/grid_cursor_green.png");
         private static Texture gridCursorRedTex = GD.Load<Texture>("res://textures/grid_cursor_red.png");
+        private static Texture gridCursorDarkGreenTex = GD.Load<Texture>("res://textures/grid_cursor_darkgreen.png");
+        private static Texture gridCursorDarkRedTex = GD.Load<Texture>("res://textures/grid_cursor_darkred.png");
+        private static Texture gridCursorArrowGreenTex = GD.Load<Texture>("res://textures/grid_cursor_arrow_green.png");
+        private static Texture gridCursorArrowRedTex = GD.Load<Texture>("res://textures/grid_cursor_arrow_red.png");
         private static Texture blockedTex = GD.Load<Texture>("res://textures/blocked.png");
         private static Texture disconnectedTex = GD.Load<Texture>("res://textures/disconnected.png");
+        private static Texture longPlungerTex = GD.Load<Texture>("res://textures/long_plunger.png");
         private static PhysicsMaterial vehiclePhysMat = new PhysicsMaterial()
         {
             Friction = 0,
@@ -76,6 +86,7 @@ namespace Fragile
         public static Point[] FourDirs { get; } = new Point[4] { new Point(0, -1), new Point(1, 0), new Point(0, 1), new Point(-1, 0) };
 
         private static Part[,] partsGrid = new Part[GRID_WIDTH, GRID_HEIGHT];
+        private static float[,] rotationGrid = new float[GRID_WIDTH, GRID_HEIGHT];
         public static Point RootPartPos { get; } = new Point(6, 4);
         public static bool DrawGrid { get; set; } = true;
         public static Label Debug;
@@ -87,6 +98,7 @@ namespace Fragile
         private Sprite gridCursor;
         private Sprite[] extraGridCursors;
         private Sprite cursorWarning;
+        private Sprite cursorArrow;
         private Tween tween;
         private Label selectedPartLabel;
         private Vehicle vehicle;
@@ -103,6 +115,7 @@ namespace Fragile
         private Label powerWarning;
         private int wheelCount = 0;
         private TransitionRect transitionRect;
+        private float cursorRotation = 0f;
 
 
         private Dictionary<MainPart, int> inventory = new Dictionary<MainPart, int>()
@@ -143,13 +156,14 @@ namespace Fragile
             extraGridCursors = new Sprite[5] { gridCursor.GetChild<Sprite>(0), gridCursor.GetChild<Sprite>(1), gridCursor.GetChild<Sprite>(2), gridCursor.GetChild<Sprite>(3), gridCursor.GetChild<Sprite>(4) };
             selectedPartLabel = GetNode<Label>("SelectedPartLabel");
             cursorWarning = GetNode<Sprite>("Grid/GridCursor/Warning");
+            cursorArrow = GetNode<Sprite>("Grid/GridCursor/Arrow");
             buildPlayer = GetNode<AudioStreamPlayer>("BuildPlayer");
             dismantlePlayer = GetNode<AudioStreamPlayer>("DismantlePlayer");
             partTooltip = GetNode<PartTooltip>("PartTooltip");
             powerProgress = GetNode<TextureProgress>("PowerProgress");
             weightProgress = GetNode<TextureProgress>("WeightProgress");
             powerWarning = GetNode<Label>("PowerWarning");
-            transitionRect = GetNode<TransitionRect>("TransitionRect");
+            transitionRect = GetNode<TransitionRect>("CanvasLayer/TransitionRect");
 
             Debug = GetNode<Label>("debug");
 
@@ -194,8 +208,10 @@ namespace Fragile
 
                 GetNode("TutorialIntro").Connect("confirmed", GetNode("TutorialGrid"), "popup", new Godot.Collections.Array() { new Rect2(172, 12, 255, 88) });
                 GetNode("TutorialGrid").Connect("confirmed", GetNode("TutorialParts"), "popup", new Godot.Collections.Array() { new Rect2(103, 40, 247, 112) });
-                GetNode("TutorialParts").Connect("confirmed", GetNode("TutorialDials"), "popup", new Godot.Collections.Array() { new Rect2(96, 169, 190, 67) });
+                GetNode("TutorialParts").Connect("confirmed", GetNode("TutorialRotation"), "popup", new Godot.Collections.Array() { new Rect2(129, 62, 225, 103) });
+                GetNode("TutorialRotation").Connect("confirmed", GetNode("TutorialDials"), "popup", new Godot.Collections.Array() { new Rect2(96, 169, 190, 67) });
                 GetNode("TutorialDials").Connect("confirmed", GetNode("TutorialDrive"), "popup", new Godot.Collections.Array() { new Rect2(96, 133, 190, 97) });
+                GetNode("TutorialDrive").Connect("confirmed", GetNode("TutorialFinal"), "popup", new Godot.Collections.Array() { new Rect2(173, 52, 207, 133) });
             }
 
             if (QuickRestart)
@@ -236,6 +252,17 @@ namespace Fragile
                     RemovePart(cursorGridPos);
                     UpdateGridCursor(cursorGridPos, true);
                 }
+            }
+
+            if (evt.IsActionPressed("rotate_cw"))
+            {
+                cursorRotation = Mathf.Wrap(cursorRotation + (Mathf.Pi * .5f), 0f, Mathf.Tau);
+                UpdateGridCursor(cursorGridPos, true);
+            }
+            if (evt.IsActionPressed("rotate_ccw"))
+            {
+                cursorRotation = Mathf.Wrap(cursorRotation - (Mathf.Pi * .5f), 0f, Mathf.Tau);
+                UpdateGridCursor(cursorGridPos, true);
             }
         }
 
@@ -278,18 +305,28 @@ namespace Fragile
                     {
                         Part p = partsGrid[x, y];
 
+                        var offset = p is MainPart mp ? mp.TexOffset : new Vector2(-16, -16);
+
+                        if (p is PistonPart pistonPart)
+                        {
+                            DrawSetTransformMatrix(new Transform2D(rotationGrid[x, y], grid.Position + new Vector2(x * 32, y * 32) + new Vector2(16, 16) + new Vector2(0, 16).Rotated(rotationGrid[x, y])));
+                            DrawTexture(longPlungerTex, offset);
+                        }
+
+                        DrawSetTransformMatrix(new Transform2D(rotationGrid[x, y], grid.Position + new Vector2(x * 32, y * 32) + new Vector2(16, 16)));
+
                         if (p is WheelPart wheelPart)
                         {
-                            DrawTexture(wheelPart.WheelTex, grid.Position + new Vector2(x * 32, y * 32));
-                            DrawTexture(wheelPart.Texture, grid.Position + new Vector2(x * 32, y * 32));
+                            DrawTexture(wheelPart.WheelTex, offset);
+                            DrawTexture(wheelPart.Texture, offset);
                         }
                         else if (p is MainPart mainPart)
                         {
-                            DrawTexture(mainPart.Texture, grid.Position + mainPart.TexOffset + new Vector2(x * 32, y * 32));
+                            DrawTexture(mainPart.Texture, offset);
                         }
                         else if (p is RootPart)
                         {
-                            DrawTexture(rootTex, grid.Position + new Vector2(x * 32, y * 32));
+                            DrawTexture(rootTex, offset);
                         }
                     }
                 }
@@ -311,10 +348,10 @@ namespace Fragile
                 partButtons[part].SetCount(inventory[part]);
 
                 partsGrid[point.x, point.y] = part;
+                rotationGrid[point.x, point.y] = cursorRotation;
 
                 if (part is MainPart mainPart)
                 {
-                    bool allClear = true;
 
                     weight += mainPart.Mass;
                     if (mainPart is EnginePart enginePart)
@@ -322,26 +359,28 @@ namespace Fragile
                     if (mainPart is WheelPart wheelPart)
                         wheelCount++;
 
-                    foreach (Point extraPos in mainPart.ExtraParts)
-                    {
-                        if (!IsGridPointEmpty(point + extraPos))
-                        {
-                            allClear = false;
-                            break;
-                        }
-                    }
+                    // bool allClear = true;
 
-                    if (!allClear)
-                    {
-                        partsGrid[point.x, point.y] = null;
+                    // foreach (var extraPart in mainPart.ExtraParts)
+                    // {
+                    //     if (!IsGridPointEmpty(point + extraPart.point))
+                    //     {
+                    //         allClear = false;
+                    //         break;
+                    //     }
+                    // }
 
-                        return false;
-                    }
+                    // if (!allClear)
+                    // {
+                    //     partsGrid[point.x, point.y] = null;
 
-                    foreach (Point extraPos in mainPart.ExtraParts)
+                    //     return false;
+                    // }
+
+                    foreach (var extraPoint in mainPart.ExtraParts)
                     {
-                        Point p = point + extraPos;
-                        partsGrid[p.x, p.y] = new ExtraPart(point);
+                        Point p = point + extraPoint.point.Rotated(cursorRotation);
+                        partsGrid[p.x, p.y] = new ExtraPart(point, extraPoint.isSolid);
                     }
                 }
 
@@ -374,9 +413,9 @@ namespace Fragile
             {
                 if (part is MainPart mainPart)
                 {
-                    foreach (Point extraPos in mainPart.ExtraParts)
+                    foreach (var mExtraPart in mainPart.ExtraParts)
                     {
-                        Point p = point + extraPos;
+                        Point p = point + mExtraPart.point.Rotated(rotationGrid[point.x, point.y]);
                         partsGrid[p.x, p.y] = null;
                     }
 
@@ -485,12 +524,26 @@ namespace Fragile
             return false;
         }
 
+        private static bool IsGridPointSolid(Point point)
+        {
+            if (partsGrid[point.x, point.y] is Part part)
+            {
+                return part.IsSolid;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         private static bool IsGridPointConnected(Point point)
         {
             bool connected = false;
             foreach (var dir in FourDirs)
             {
-                if (IsPointInGrid(point + dir) && !IsGridPointEmpty(point + dir))
+                var translated = point + dir;
+
+                if (IsPointInGrid(translated) && !IsGridPointEmpty(translated) && IsGridPointSolid(translated))
                 {
                     connected = true;
                     break;
@@ -529,7 +582,7 @@ namespace Fragile
 
                         if (p is RootPart)
                         {
-                            vehicle.AddSprite(rootTex, pos);
+                            vehicle.AddSprite(rootTex, pos, new Vector2(-16, -16), 0);
 
                             vehicle.Camera2D = new Camera2D()
                             {
@@ -544,21 +597,21 @@ namespace Fragile
                         }
                         else if (p is WheelPart wheelPart)
                         {
-                            vehicle.AddWheel(pos, wheelPart);
+                            vehicle.AddWheel(pos, wheelPart, rotationGrid[x, y]);
                         }
                         else if (p is PistonPart pistonPart)
                         {
-                            vehicle.AddPiston(pos, pistonPart);
+                            vehicle.AddPiston(pos, pistonPart, rotationGrid[x, y]);
                         }
                         else if (p is MainPart mainPart)
                         {
-                            vehicle.AddSprite(mainPart.Texture, pos, mainPart.TexOffset);
+                            vehicle.AddSprite(mainPart.Texture, pos, mainPart.TexOffset, rotationGrid[x, y]);
                         }
 
                         if (p is EnginePart enginePart)
                         {
                             vehicle.AddEngineStats(enginePart);
-                            vehicle.AddEngineSmoke(pos, enginePart.SmokeOffset);
+                            vehicle.AddEngineSmoke(pos, enginePart.SmokeOffset, rotationGrid[x, y]);
                         }
 
                         bool addCollider = true;
@@ -604,6 +657,14 @@ namespace Fragile
                 partsGrid[point.x, point.y] = value;
         }
 
+        public static float GetGridRotation(Point point)
+        {
+            if (IsPointInGrid(point))
+                return rotationGrid[point.x, point.y];
+            else
+                return 0f;
+        }
+
         private void UpdateGridCursor(Point cursorPoint, bool forceFullUpdate)
         {
             if (IsPointInGrid(cursorPoint))
@@ -638,14 +699,16 @@ namespace Fragile
 
                     if (cursorClear)
                     {
-                        foreach (var extraPos in cursorPart.ExtraParts)
+                        foreach (var extraPart in cursorPart.ExtraParts)
                         {
-                            if (!IsGridPointEmpty(cursorGridPos + extraPos))
+                            var point = cursorGridPos + extraPart.point.Rotated(cursorRotation);
+
+                            if (!IsGridPointEmpty(point))
                             {
                                 cursorClear = false;
                                 break;
                             }
-                            else if (IsGridPointConnected(cursorGridPos + extraPos))
+                            else if (IsGridPointConnected(point) && extraPart.isSolid)
                             {
                                 cursorConnected = true;
                             }
@@ -653,6 +716,10 @@ namespace Fragile
                     }
 
                     gridCursor.Texture = (cursorClear && cursorConnected) ? gridCursorGreenTex : gridCursorRedTex;
+
+                    // Arrow
+                    cursorArrow.Texture = (cursorClear && cursorConnected) ? gridCursorArrowGreenTex : gridCursorArrowRedTex;
+                    cursorArrow.Rotation = cursorRotation;
 
                     if (!cursorClear)
                     {
@@ -673,9 +740,10 @@ namespace Fragile
                     {
                         if (i < cursorPart.ExtraParts.Length)
                         {
-                            extraGridCursors[i].Position = (cursorPart.ExtraParts[i] * 32).ToVector2();
-                            extraGridCursors[i].Texture = gridCursor.Texture;
+                            extraGridCursors[i].Position = (cursorPart.ExtraParts[i].point.Rotated(cursorRotation) * 32).ToVector2();
+                            extraGridCursors[i].Texture = (cursorClear && cursorConnected) ? (cursorPart.ExtraParts[i].isSolid ? gridCursorGreenTex : gridCursorDarkGreenTex) : (cursorPart.ExtraParts[i].isSolid ? gridCursorRedTex : gridCursorDarkRedTex);
                             extraGridCursors[i].Visible = true;
+                            extraGridCursors[i].ZIndex = cursorPart.ExtraParts[i].isSolid ? 1 : 0;
                         }
                         else
                         {

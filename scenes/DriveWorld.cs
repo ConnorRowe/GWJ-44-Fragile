@@ -202,7 +202,7 @@ namespace Fragile
 
         private void QuickRestart()
         {
-            transitionRect.FadeOut(new Color("1b1f21"), .5f);
+            transitionRect.FadeOut(new Color("52333f"), .5f);
             Construction.QuickRestart = true;
             Construction.OverwriteGrid(partsGridCached);
         }

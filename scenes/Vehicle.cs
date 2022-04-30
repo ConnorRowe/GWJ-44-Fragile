@@ -146,7 +146,7 @@ namespace Fragile
                 maxVelLenDel = velocityLenDelta;
 
             // Velocity changed sharply - probably hit something
-            if (velocityLenDelta > forceNeededToBreak && lastColliderHitIndex > 0)
+            if (velocityLenDelta > forceNeededToBreak && lastColliderHitIndex >= 0)
             {
                 try
                 {
@@ -195,19 +195,15 @@ namespace Fragile
             // GD.Print($"BodyShapeEntered({bodyRID.ToString()}, {body}, {bodyShapeIndex}, {localShapeIndex})");
         }
 
-        public Sprite AddSprite(Texture texture, Point gridPos)
-        {
-            return AddSprite(texture, gridPos, Vector2.Zero);
-        }
-
-        public Sprite AddSprite(Texture texture, Point gridPos, Vector2 offset)
+        public Sprite AddSprite(Texture texture, Point gridPos, Vector2 offset, float rotation)
         {
             Sprite sprite = new Sprite()
             {
                 Texture = texture,
-                Position = new Vector2(gridPos.x * 32, gridPos.y * 32),
+                Position = (gridPos * 32).ToVector2() + new Vector2(16, 16),
                 Offset = offset,
-                Centered = false
+                Centered = false,
+                Rotation = rotation
             };
 
             pointSprites.Add(gridPos, sprite);
@@ -234,27 +230,50 @@ namespace Fragile
             AddChild(collisionShape2D);
         }
 
-        public void AddWheel(Point gridPos, Parts.WheelPart wheelPart)
+        public void AddWheel(Point gridPos, Parts.WheelPart wheelPart, float rotation)
         {
-            AddSprite(wheelPart.Texture, gridPos);
+            AddSprite(wheelPart.Texture, gridPos, new Vector2(-16, -16), rotation);
             AddSquareCollider(gridPos);
 
             bool jumbo = wheelPart is Parts.JumboWheelPart;
 
             if (jumbo)
-                AddSquareCollider(gridPos + new Point(1, 0));
+                AddSquareCollider(gridPos + new Point(1, 0).Rotated(rotation));
 
             RigidBody2D wheel = new WheelBody2D()
             {
                 Mass = 3f,
                 PhysicsMaterialOverride = wheelPhysMat,
-                Position = this.Position + new Vector2((gridPos.x * 32) + 16, ((gridPos.y + 1) * 32) + 16f),
+                Position = this.Position + ((gridPos + Point.Down.Rotated(rotation)) * 32).ToVector2() + new Vector2(16, 16f),
                 Layers = 0,
                 GravityScale = 0,
             };
 
             if (jumbo)
-                wheel.Position = this.Position + new Vector2((gridPos.x + 1) * 32, ((gridPos.y + 2) * 32) + 16f);
+            {
+                Vector2 jumboOffset = Vector2.Zero;
+
+                int deg = Mathf.RoundToInt(Mathf.Rad2Deg(rotation));
+
+                switch (deg)
+                {
+                    case 0:
+                    case 360:
+                        jumboOffset = new Vector2(32, 76);
+                        break;
+                    case 90:
+                        jumboOffset = new Vector2(-45, 32);
+                        break;
+                    case 180:
+                        jumboOffset = new Vector2(0, -45);
+                        break;
+                    case 270:
+                        jumboOffset = new Vector2(76, 0);
+                        break;
+                }
+
+                wheel.Position = this.Position + (gridPos * 32).ToVector2() + jumboOffset;
+            }
 
             CollisionShape2D collisionShape2D = new CollisionShape2D()
             {
@@ -274,7 +293,7 @@ namespace Fragile
 
             PinJoint2D pinJoint = new PinJoint2D()
             {
-                Softness = 4f,
+                Softness = jumbo ? 2.5f : 3.5f,
                 Position = wheel.Position
             };
 
@@ -289,13 +308,14 @@ namespace Fragile
             pointWheels.Add(gridPos, (wheel, pinJoint, wheelSprite));
         }
 
-        public void AddPiston(Point gridPoint, Parts.PistonPart pistonPart)
+        public void AddPiston(Point gridPoint, Parts.PistonPart pistonPart, float rotation)
         {
-            AddSprite(pistonPart.Texture, gridPoint);
+            AddSprite(pistonPart.Texture, gridPoint, new Vector2(-16, -16), rotation);
 
             PistonPartBody piston = pistonScene.Instance<PistonPartBody>();
             AddChild(piston);
             piston.Position = (gridPoint * 32).ToVector2() + new Vector2(16, 16);
+            piston.Rotation = rotation;
 
             CollisionShape2D collisionShape2D = new CollisionShape2D()
             {
@@ -336,6 +356,7 @@ namespace Fragile
 
             Point partPoint = colliderPoints[partCollider];
             Part part = Construction.GetGridPart(partPoint + Construction.RootPartPos);
+            float rotation = Construction.GetGridRotation(partPoint + Construction.RootPartPos);
 
             NewNutsNBolts(partCollider.GlobalPosition);
             GlobalNodes.VehiclePartBreak();
@@ -366,7 +387,7 @@ namespace Fragile
                     brokenPart.AddChild(partCollider);
 
                     sprite.Position = Vector2.Zero;
-                    partCollider.Position = new Vector2(16, 16);
+                    partCollider.Position = Vector2.Zero;
 
                     pointSprites.Remove(colliderPoints[partCollider]);
                     colliderPoints.Remove(partCollider);
@@ -410,18 +431,18 @@ namespace Fragile
                         PinJoints.Remove(wheelNodes.pin);
                         pointWheels.Remove(partPoint);
 
-                        Construction.SetGridPart(partPoint + new Point(0, 1) + Construction.RootPartPos, null);
+                        Construction.SetGridPart(partPoint + new Point(0, 1).Rotated(rotation) + Construction.RootPartPos, null);
 
                         if (wheelPart is JumboWheelPart)
                         {
-                            var extraJumboCollider = pointColliders[partPoint + new Point(1, 0)];
+                            var extraJumboCollider = pointColliders[partPoint + new Point(1, 0).Rotated(rotation)];
                             RemoveChild(extraJumboCollider);
                             brokenPart.AddChild(extraJumboCollider);
-                            extraJumboCollider.Position = new Vector2(48, 16);
+                            extraJumboCollider.Position = (Point.Right.Rotated(Construction.GetGridRotation(partPoint + Construction.RootPartPos)) * 32).ToVector2();
 
-                            foreach (var extraOffset in wheelPart.ExtraParts)
+                            foreach (var extraPart in wheelPart.ExtraParts)
                             {
-                                Construction.SetGridPart(partPoint + extraOffset + Construction.RootPartPos, null);
+                                Construction.SetGridPart(partPoint + extraPart.point + Construction.RootPartPos, null);
                             }
                         }
 
@@ -432,9 +453,9 @@ namespace Fragile
                     }
                     else
                     {
-                        foreach (var extraOffset in mainPart.ExtraParts)
+                        foreach (var extraPart in mainPart.ExtraParts)
                         {
-                            var extraPoint = partPoint + extraOffset;
+                            var extraPoint = partPoint + extraPart.point.Rotated(Construction.GetGridRotation(partPoint + Construction.RootPartPos));
 
                             if (pointColliders.ContainsKey(extraPoint))
                             {
@@ -442,7 +463,7 @@ namespace Fragile
 
                                 RemoveChild(extraCollider);
                                 brokenPart.AddChild(extraCollider);
-                                extraCollider.Position = new Vector2(16 + (extraOffset.x * 32), 16 + (extraOffset.y * 32));
+                                extraCollider.Position = (extraPart.point.Rotated(Construction.GetGridRotation(partPoint + Construction.RootPartPos)) * 32).ToVector2();
 
                                 colliderPoints.Remove(extraCollider);
                                 pointColliders.Remove(extraPoint);
@@ -457,7 +478,8 @@ namespace Fragile
             }
             else if (part is ExtraPart extraPart)
             {
-                BreakPart(pointColliders[extraPart.OwnerPart - Construction.RootPartPos], false);
+                if (pointColliders.ContainsKey(extraPart.OwnerPart - Construction.RootPartPos))
+                    BreakPart(pointColliders[extraPart.OwnerPart - Construction.RootPartPos], false);
             }
 
             // Break any disconnected parts
@@ -486,10 +508,10 @@ namespace Fragile
             maxSpeedScale -= enginePart.MaxSpeed;
         }
 
-        public void AddEngineSmoke(Point gridPos, Vector2 offset)
+        public void AddEngineSmoke(Point gridPos, Vector2 offset, float rotation)
         {
             Particles2D newEngineSmoke = engineSmokeScene.Instance<Particles2D>();
-            newEngineSmoke.Position = (gridPos * 32).ToVector2() + offset;
+            newEngineSmoke.Position = (gridPos * 32).ToVector2() + new Vector2(16, 16) + offset.Rotated(rotation);
             pointEngineSmokes.Add(gridPos, newEngineSmoke);
             newEngineSmoke.Emitting = false;
             AddChild(newEngineSmoke);
@@ -531,7 +553,7 @@ namespace Fragile
 
         public void SelfDestruct()
         {
-            foreach (var dir in Construction.FourDirs)
+            foreach (var dir in new Point[8] { new Point(0, -1), new Point(1, 0), new Point(0, 1), new Point(-1, 0), new Point(-1, -1), new Point(-1, 1), new Point(1, 1), new Point(1, -1) })
             {
                 if (pointColliders.ContainsKey(dir))
                 {
